@@ -1,17 +1,14 @@
-import { OpenAI, OpenAIEmbedding } from "@llamaindex/openai";
-import { Settings } from "llamaindex";
+import { ollama } from "@llamaindex/ollama";
 
-export function setupProvider() {
-  Settings.llm = new OpenAI({
-    model: process.env.MODEL ?? "gpt-4o-mini",
-    maxTokens: process.env.LLM_MAX_TOKENS
-      ? Number(process.env.LLM_MAX_TOKENS)
-      : undefined,
+export const setupProvider = () =>
+  ollama({
+    model: process.env.LLM_MODEL || "mistral",
+    config: {
+      baseUrl: process.env.OLLAMA_HOST || "http://127.0.0.1:11434",
+    },
+    options: {
+      temperature: 0.7,
+      num_ctx: 4096,
+      top_p: 0.9,
+    },
   });
-  Settings.embedModel = new OpenAIEmbedding({
-    model: process.env.EMBEDDING_MODEL,
-    dimensions: process.env.EMBEDDING_DIM
-      ? parseInt(process.env.EMBEDDING_DIM)
-      : undefined,
-  });
-}

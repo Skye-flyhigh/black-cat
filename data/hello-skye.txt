@@ -1,0 +1,1 @@
+Skye is a developer and architect of a local RAG system. Their name is Skye. They are working on a project using LlamaIndex, Ollama, and Chroma. The EchoChamber was built by Skye to hold persistent vectorized memories.

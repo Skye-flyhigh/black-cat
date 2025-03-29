@@ -1,43 +1,63 @@
 import { VectorStoreIndex } from "llamaindex";
 import { storageContextFromDefaults } from "llamaindex/storage/StorageContext";
-
+import { ChromaVectorStore } from "./chroma/ChromaVectorStore";
 import * as dotenv from "dotenv";
-
-import { getDocuments } from "./loader";
-import { initSettings } from "./settings";
-
 // Load environment variables from local .env file
 dotenv.config();
 
-async function getRuntime(func: any) {
-  const start = Date.now();
-  await func();
-  const end = Date.now();
-  return end - start;
-}
-
-async function generateDatasource() {
-  console.log(`Generating storage context...`);
-  // Split documents, create embeddings and store them in the storage context
-  const persistDir = process.env.STORAGE_CACHE_DIR;
-  if (!persistDir) {
-    throw new Error("STORAGE_CACHE_DIR environment variable is required!");
-  }
-  const ms = await getRuntime(async () => {
-    const storageContext = await storageContextFromDefaults({
-      persistDir,
-    });
-    const documents = await getDocuments();
-
-    await VectorStoreIndex.fromDocuments(documents, {
-      storageContext,
-    });
-  });
-  console.log(`Storage context successfully generated in ${ms / 1000}s.`);
-}
+import { getDocuments } from "./loader";
+import { initSettings } from './settings';
 
 (async () => {
-  initSettings();
-  await generateDatasource();
-  console.log("Finished generating storage.");
+  await initSettings();
+  // rest of your code...
+  
+  async function getRuntime(func: any) {
+    const start = Date.now();
+    await func();
+    const end = Date.now();
+    return end - start;
+  }
+  
+  async function generateDatasource() {
+    console.log(`Generating storage context...`);
+    // Split documents, create embeddings and store them in the storage context
+    const persistDir = process.env.STORAGE_CACHE_DIR;
+    if (!persistDir) {
+      throw new Error("STORAGE_CACHE_DIR environment variable is required!");
+    }
+  
+    const ms = await getRuntime(async () => {
+      const documents = await getDocuments();
+
+      // ✅ Create Chroma vector store instance
+      const chromaStore = new ChromaVectorStore({
+        collectionName: "echo_chamber", // this is the Chroma collection name
+        chromaClientParams: { baseUrl: process.env.CHROMA_URL || "http://localhost:8000" }, // your Docker container’s endpoint
+      });      
+      // console.log("🛠️ Building the actual storage", chromaStore);
+
+      const storageContext = await storageContextFromDefaults({
+        persistDir,
+        vectorStore: chromaStore
+      });
+  
+      await VectorStoreIndex.fromDocuments(documents, {
+        storageContext,
+      });
+
+      //Testing the connection with Chroma
+      // const index = await VectorStoreIndex.init({ storageContext });
+      // const queryEngine = index.asQueryEngine();
+      // const response = await queryEngine.query({ query: "What is Skye's name?" });
+      // console.log("📣 Response from EchoChamber:", response.response);
+    });
+  
+    console.log(`📣 Echoes successfully gathered in ${ms / 1000}s.`);
+  }
+  
+  (async () => {
+    await generateDatasource();
+    console.log("✅ Echo chamber up and ready.");
+  })();
 })();
