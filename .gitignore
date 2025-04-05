@@ -1,45 +1,33 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# 👉 General
+.DS_Store
+*.log
+*.pem
 
-# dependencies
+# 👉 Dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# testing
+# 👉 Testing
 /coverage
 
-# next.js
+# 👉 Build & Output
 /.next/
 /out/
-
-# production
 /build
+/output
+/.cache
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
+# 👉 TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-output/
+# 👉 Environment Files
+.env
+.env*.local
 
+# 👉 Vercel
+.vercel
 
-.cache/
-data/*.pdf
-data/*.docx
-data/*.csv
-data/*.txt
+# 👉 Raw Data Files (ignored by default)
+/data/*

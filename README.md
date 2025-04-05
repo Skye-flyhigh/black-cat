@@ -30,6 +30,35 @@ npm run generate
 npm run dev
 ```
 
+## 🧊 Setting up ChromaDB (EchoChamber)
+
+To set up ChromaDB using Docker, follow these steps:
+
+1. Pull the official ChromaDB image:
+
+```bash
+docker pull ghcr.io/chroma-core/chroma:0.6.4.dev361
+```
+
+2. Run the ChromaDB container (you can name it EchoChamber if you like):
+
+```bash
+docker run --rm -d \
+  --name EchoChamber \
+  -p 8000:8000 \
+  ghcr.io/chroma-core/chroma:0.6.4.dev361
+```
+
+Make sure to adjust the port if necessary.
+
+### .env Example
+
+Create a `.env` file in the root directory with the following configuration:
+
+```
+CHROMA_DB_URL=http://localhost:8000
+```
+
 ## 🖼️ Front end access
 
 Visit [http://localhost:3000](http://localhost:3000) in your browser to see the local RAG system in action.
@@ -37,6 +66,9 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser to see the 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+
+## ChromaDB setup - EchoChamber
+
 
 ## 📂 Directory Overview
 

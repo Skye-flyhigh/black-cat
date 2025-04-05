@@ -1,12 +1,12 @@
 import { VectorStoreIndex } from "llamaindex";
 import { storageContextFromDefaults } from "llamaindex/storage/StorageContext";
-import { ChromaVectorStore } from "./chroma/ChromaVectorStore";
 import * as dotenv from "dotenv";
 // Load environment variables from local .env file
 dotenv.config();
 
 import { getDocuments } from "./loader";
 import { initSettings } from './settings';
+import { createChromaStore } from "./chroma/chromaStore";
 
 (async () => {
   await initSettings();
@@ -31,10 +31,8 @@ import { initSettings } from './settings';
       const documents = await getDocuments();
 
       // ✅ Create Chroma vector store instance
-      const chromaStore = new ChromaVectorStore({
-        collectionName: "echo_chamber", // this is the Chroma collection name
-        chromaClientParams: { baseUrl: process.env.CHROMA_URL || "http://localhost:8000" }, // your Docker container’s endpoint
-      });      
+      const chromaStore = createChromaStore()
+
       // console.log("🛠️ Building the actual storage", chromaStore);
 
       const storageContext = await storageContextFromDefaults({

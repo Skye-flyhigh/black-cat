@@ -13,6 +13,7 @@ export default function ChatSection() {
   const handler = useChat({
     api: `${backend}/api/chat`,
     onError: (error: unknown) => {
+      console.error("❌ Error received on chat-section frontend:", error);
       if (!(error instanceof Error)) throw error;
       let errorMessage: string;
       try {
