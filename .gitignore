@@ -16,7 +16,8 @@
 /out/
 /build
 /output
-/.cache
+.cache
+/memory
 
 # 👉 TypeScript
 *.tsbuildinfo

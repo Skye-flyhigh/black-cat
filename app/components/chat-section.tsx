@@ -12,6 +12,7 @@ export default function ChatSection() {
   const { backend } = useClientConfig();
   const handler = useChat({
     api: `${backend}/api/chat`,
+    streamProtocol: "text",
     onError: (error: unknown) => {
       console.error("❌ Error received on chat-section frontend:", error);
       if (!(error instanceof Error)) throw error;
