@@ -1,6 +1,6 @@
 import { ChatMessage, VectorStoreIndex } from "llamaindex";
 import { initSettings } from "./settings";
-import { logMemory } from "./logMemory";
+import { logMemory } from "./memory/logMemory";
 import { getChromaStore } from "./chroma/chromaStore";
 import * as dotenv from "dotenv";
 dotenv.config();

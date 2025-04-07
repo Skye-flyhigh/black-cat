@@ -1,17 +1,21 @@
-import { ChromaVectorStore } from "./ChromaVectorStore";
 import { ChromaClient } from "chromadb";
 import * as dotenv from "dotenv";
+import { BlackCatVectorStore } from "./BlackCatChromaVectorStore";
 dotenv.config();
 
 const collectionName = process.env.CHROMA_COLLECTION_NAME || "echo_chamber";
 const baseUrl = process.env.CHROMA_URL || "http://localhost:8000";
 
-let chromaStoreInstance: ChromaVectorStore | null = null;
+let chromaStoreInstance: BlackCatVectorStore | null = null;
 let chromaClient: ChromaClient | null = null;
 
-const embeddingFct = async (text: string) => Array(4096).fill(0); // Temporary stub embedding function (zero vectors)
+const embeddingFct = async (text: string) => {
+    // Generate a random embedding vector (4096 dimensions)
+    // This is still a stub, but at least not zero vectors
+    return Array(4096).fill(0).map(() => Math.random() - 0.5);
+};
 
-export async function getChromaStore(): Promise<ChromaVectorStore> {
+export async function getChromaStore(): Promise<BlackCatVectorStore> {
     if (!chromaClient) {
         console.log("⚙️ Initializing ChromaClient...");
         chromaClient = new ChromaClient({ path: baseUrl });
@@ -34,7 +38,7 @@ export async function getChromaStore(): Promise<ChromaVectorStore> {
     });
 
     if (!chromaStoreInstance) {
-        chromaStoreInstance = new ChromaVectorStore({
+        chromaStoreInstance = new BlackCatVectorStore({
             collectionName,
             chromaClient,
             embeddingModel: {
@@ -54,7 +58,7 @@ export async function getChromaClient(): Promise<ChromaClient> {
 }
 
 export function createChromaStore() {
-    return new ChromaVectorStore({
+    return new BlackCatVectorStore({
         collectionName,
         chromaClientParams: { baseUrl },
     });

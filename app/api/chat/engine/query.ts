@@ -1,10 +1,8 @@
 // This document was just to test the connection between Llamaindex and Chroma
-import { VectorStoreIndex } from "llamaindex";
-import { storageContextFromDefaults } from "llamaindex/storage/StorageContext";
+import { BaseEmbedding, VectorStoreIndex } from "llamaindex";
 import { initSettings } from "./settings";
 import * as dotenv from "dotenv";
-
-import { logMemory } from "./logMemory";
+import { MemoryManager } from "./memory/MemoryManager";
 import { getChromaStore } from "./chroma/chromaStore";
 dotenv.config();
 
@@ -19,17 +17,24 @@ dotenv.config();
   const chromaStore = await getChromaStore();
   const index = await VectorStoreIndex.fromVectorStore(chromaStore);
 
-    // Log the user message
-    await logMemory({
-      message: "My dog's name is Heidi",
-      metadata: {
-        timestamp: new Date().toISOString(),
-        source: "user"
-      }
-    });
-
-    const retriever = index.asRetriever();
+  const memoryManager = new MemoryManager(chromaStore, chromaStore.embedModel);
+  console.log("🔍 Fetching in the memory files...");
+  
+  await memoryManager.addMemory({
+    id: "memory-" + Date.now(),
+    text: "My dog's name is Heidi",
+    metadata: {
+      timestamp: new Date().toISOString(),
+      source: "user"
+    },
+    embedding: [],
+    skipQuery: true
+  });
+  console.log("🗃️ Box of memories opened and new memory added...");
+  
+  const retriever = index.asRetriever();
   const nodes = await retriever.retrieve({ query: "Who is Heidi?" });
+
   console.log("🔍 Raw retrieved nodes:", nodes);
   console.log(
     "🔍 Retrieved Nodes:", 

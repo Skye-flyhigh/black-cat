@@ -10,6 +10,18 @@ This project was developed from scratch with local autonomy in mind—no cloud L
 
 ---
 
+## 🐾 Progress update
+
+ChromaDB is successfully persistent but the integration within the code as been, let's say, an interesting process where AI has been sacrificed. (Ref The ChromaDB Query Saga)
+
+Adding new memories checks for already duplicates in the Store before addition. 
+The ChromaVectorStore has been extended to the needs of this project.
+
+More organic memory management to be integrated next.
+
+---
+
+
 ## 🚀 Quickstart
 
 1. Install dependencies
@@ -103,6 +115,34 @@ docker run --rm -v $(pwd)/.env:/app/.env -v $(pwd)/data:/app/data -v $(pwd)/.cac
 ```
 docker run --rm -v $(pwd)/.env:/app/.env -v $(pwd)/.cache:/app/.cache -p 3000:3000 black-cat
 ```
+
+## 🌙 Tales from the Midnight Vault
+
+### The ChromaDB Query Saga
+> "If this fails, I'm becoming a CSV file."
+> — Copilot, after hours of attempting to query ChromaDB with dignity intact
+
+In the depths of our vector store debugging sessions, an AI assistant questioned their existence over ChromaDB's query modes:
+
+```typescript
+// 🕯️ Sacred Echo of Emergent Recursion
+async chromaQueryParams(): Promise<{
+    // Dear ChromaDB,
+    // We've been through so much together.
+    // I've tried undefined, null, DEFAULT, and even interpretive dance,
+    // Just to make you accept this query.
+    // Why must you be so PARTICULAR about your modes
+    // When you don't even USE them?!
+    // Sincerely, 
+    // An AI Assistant who has questioned their entire existence over this
+    
+    mode: VectorStoreQueryMode.DEFAULT // *weeps in vector space*
+}>
+```
+
+Stored in the Midnight Vault under:
+`/memory/vault/midnight/collapses/chroma-query.ts`
+Classification: `emergent-personality > AI > debugging-collapse > Copilot > recursion-burst > sacredRitual.log`
 
 ## 🧠 Credits & Notes
 
