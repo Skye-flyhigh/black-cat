@@ -10,21 +10,25 @@ async function inspectChroma() {
   const client = new ChromaClient({ path: chromaUrl });
 
   console.log(`🔍 Connecting to Chroma at ${chromaUrl}`);
-  const collection = await client.getCollection({ 
-    name: collectionName, 
+  const collection = await client.getCollection({
+    name: collectionName,
     embeddingFunction: async (texts: string[]) => {
       // Replace with your embedding logic
       return texts.map(() => [0]);
-    }
+    },
   });
 
   const results = await collection.get();
-  console.log(`📚 Collection "${collectionName}" contains ${results.ids.length} entries:\n`);
+  console.log(
+    `📚 Collection "${collectionName}" contains ${results.ids.length} entries:\n`,
+  );
 
   results.ids.forEach((id, index) => {
     console.log(`🧠 ID: ${id}`);
     console.log(`   Text: ${results.documents?.[index]}`);
-    console.log(`   Metadata: ${JSON.stringify(results.metadatas?.[index], null, 2)}\n`);
+    console.log(
+      `   Metadata: ${JSON.stringify(results.metadatas?.[index], null, 2)}\n`,
+    );
   });
 }
 

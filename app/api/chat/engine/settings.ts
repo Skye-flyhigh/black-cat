@@ -1,5 +1,5 @@
-import { Settings } from "llamaindex";
 import { Ollama, OllamaEmbedding } from "@llamaindex/ollama";
+import { Settings } from "llamaindex";
 import { setupProvider } from "./provider";
 
 const CHUNK_SIZE = 512;
@@ -16,7 +16,7 @@ export const initSettings = async () => {
   const baseUrl = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
 
   const ollama = new Ollama({ model, baseUrl });
-  const ollamaEmbedding = new OllamaEmbedding({ model, config: {baseUrl}})
+  const ollamaEmbedding = new OllamaEmbedding({ model, config: { baseUrl } });
 
   Settings.llm = ollama;
   Settings.embedModel = ollamaEmbedding;

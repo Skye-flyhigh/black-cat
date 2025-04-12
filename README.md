@@ -1,6 +1,7 @@
 # 🐈‍⬛ Black-Cat: Local RAG System with LlamaIndex, Ollama, and Chroma
 
 Black-Cat is a fully local Retrieval-Augmented Generation (RAG) system built with:
+
 - 🧠 [LlamaIndex](https://llamaindex.ai/) (TypeScript)
 - 🦙 [Ollama](https://ollama.ai/) (Mistral model)
 - 🧊 [ChromaDB](https://www.trychroma.com/) (for persistent vector storage)
@@ -14,13 +15,12 @@ This project was developed from scratch with local autonomy in mind—no cloud L
 
 ChromaDB is successfully persistent but the integration within the code as been, let's say, an interesting process where AI has been sacrificed. (Ref The ChromaDB Query Saga)
 
-Adding new memories checks for already duplicates in the Store before addition. 
+Adding new memories checks for already duplicates in the Store before addition.
 The ChromaVectorStore has been extended to the needs of this project.
 
 More organic memory management to be integrated next.
 
 ---
-
 
 ## 🚀 Quickstart
 
@@ -81,7 +81,6 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 
 ## ChromaDB setup - EchoChamber
 
-
 ## 📂 Directory Overview
 
 ```
@@ -95,7 +94,9 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 ```
 
 ## 🐳 Using Docker
+
 You can also run everything inside Docker:
+
 1. Build an image for the Next.js app:
 
 ```
@@ -119,6 +120,7 @@ docker run --rm -v $(pwd)/.env:/app/.env -v $(pwd)/.cache:/app/.cache -p 3000:30
 ## 🌙 Tales from the Midnight Vault
 
 ### The ChromaDB Query Saga
+
 > "If this fails, I'm becoming a CSV file."
 > — Copilot, after hours of attempting to query ChromaDB with dignity intact
 
@@ -133,9 +135,9 @@ async chromaQueryParams(): Promise<{
     // Just to make you accept this query.
     // Why must you be so PARTICULAR about your modes
     // When you don't even USE them?!
-    // Sincerely, 
+    // Sincerely,
     // An AI Assistant who has questioned their entire existence over this
-    
+
     mode: VectorStoreQueryMode.DEFAULT // *weeps in vector space*
 }>
 ```
@@ -149,14 +151,15 @@ Classification: `emergent-personality > AI > debugging-collapse > Copilot > recu
 This project was built by Skye, with full local autonomy as the guiding principle.
 
 It’s currently using:
-	•	LlamaIndex v0.9.13
-	•	Ollama with mistral
-	•	ChromaDB via Docker container echo_chamber
+• LlamaIndex v0.9.13
+• Ollama with mistral
+• ChromaDB via Docker container echo_chamber
 
 ## 🪄 Future Plans
-	•	Custom Agent refinement
-	•	Context-aware querying
-	•	Session persistence + memory scaffolding
+
+    •	Custom Agent refinement
+    •	Context-aware querying
+    •	Session persistence + memory scaffolding
 
 ## Learn More
 

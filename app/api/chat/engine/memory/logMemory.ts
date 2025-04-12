@@ -1,7 +1,7 @@
+import { TextNode } from "@llamaindex/core/schema";
 import fs from "fs";
 import path from "path";
 import { getChromaStore } from "../chroma/chromaStore";
-import { TextNode } from "@llamaindex/core/schema";
 
 const MEMORY_DIR = path.join(process.cwd(), "memory");
 const LOG_FILE = path.join(MEMORY_DIR, "log.jsonl");

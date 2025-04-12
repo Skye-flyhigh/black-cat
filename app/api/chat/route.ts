@@ -1,15 +1,9 @@
 import { initObservability } from "@/app/observability";
-import { LlamaIndexAdapter, Message } from "ai";
-import { ChatMessage, Settings } from "llamaindex";
+import { Message } from "ai";
 import { NextRequest, NextResponse } from "next/server";
-import { createChatEngine } from "./engine/chat";
-import { initSettings } from "./engine/settings";
-import {
-  isValidMessages,
-  retrieveDocumentIds,
-  retrieveMessageContent,
-} from "./llamaindex/streaming/annotations";
 import { handleAsk } from "./engine/ask"; // add this near the top with the other imports
+import { initSettings } from "./engine/settings";
+import { isValidMessages } from "./llamaindex/streaming/annotations";
 
 initObservability();
 initSettings();

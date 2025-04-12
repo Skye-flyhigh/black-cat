@@ -1,8 +1,6 @@
 {
   "outputFileTracingIncludes": {
-    "/*": [
-      "./cache/**/*"
-    ]
+    "/*": ["./cache/**/*"]
   },
   "outputFileTracingExcludes": {
     "/api/files/*": [
@@ -12,7 +10,5 @@
       "app/**/*"
     ]
   },
-  "transpilePackages": [
-    "highlight.js"
-  ]
+  "transpilePackages": ["highlight.js"]
 }

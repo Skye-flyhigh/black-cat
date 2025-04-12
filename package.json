@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "generate": "tsx app/api/chat/engine/generate.ts",
-    "query": "tsx app/api/chat/engine/query.ts"
+    "query": "tsx app/api/chat/engine/query.ts",
+    "amnesia": "tsx app/api/chat/engine/memory/dangerZone.ts"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
