@@ -1,6 +1,8 @@
-import { Ollama, OllamaEmbedding } from "@llamaindex/ollama";
+import { OllamaEmbeddingFunction } from "chromadb";
+import * as dotenv from "dotenv";
 import { Settings } from "llamaindex";
 import { setupProvider } from "./provider";
+dotenv.config();
 
 const CHUNK_SIZE = 512;
 const CHUNK_OVERLAP = 20;
@@ -12,16 +14,18 @@ export const initSettings = async () => {
     throw new Error("'MODEL' and 'EMBEDDING_MODEL' env variables must be set.");
   }
 
-  const model = process.env.MODEL || "mistral";
   const baseUrl = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
 
-  const ollama = new Ollama({ model, baseUrl });
-  const ollamaEmbedding = new OllamaEmbedding({ model, config: { baseUrl } });
+  const llm = setupProvider();
+  const ollamaEmbedding = new OllamaEmbeddingFunction({
+    model: process.env.EMBEDDING_MODEL,
+    url: baseUrl,
+  });
 
-  Settings.llm = ollama;
+  Settings.llm = llm;
   Settings.embedModel = ollamaEmbedding;
   Settings.chunkSize = CHUNK_SIZE;
   Settings.chunkOverlap = CHUNK_OVERLAP;
 
-  setupProvider();
+  return { llm, embedModel: ollamaEmbedding };
 };

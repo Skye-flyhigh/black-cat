@@ -30,13 +30,13 @@ More organic memory management to be integrated next.
 npm install
 ```
 
-2. Generate local vector index from ./data
+1. Generate local vector index from ./data
 
 ```
 npm run generate
 ```
 
-3. Start the dev server
+1. Start the dev server
 
 ```
 npm run dev
@@ -52,7 +52,7 @@ To set up ChromaDB using Docker, follow these steps:
 docker pull ghcr.io/chroma-core/chroma:0.6.4.dev361
 ```
 
-2. Run the ChromaDB container (you can name it EchoChamber if you like):
+1. Run the ChromaDB container (you can name it EchoChamber if you like):
 
 ```bash
 docker run --rm -d \
@@ -67,8 +67,91 @@ Make sure to adjust the port if necessary.
 
 Create a `.env` file in the root directory with the following configuration:
 
+```.env
+# The provider for the AI models to use.
+MODEL_PROVIDER=ollama
+
+# The name of LLM model to use.
+MODEL=mistral
+
+# Name of the embedding model to use.
+EMBEDDING_MODEL=mistral
+
+# Dimension of the embedding model to use.
+EMBEDDING_DIM=4096
+
+# The directory to store the local storage cache.
+STORAGE_CACHE_DIR=.cache
+
+CHROMA_URL=http://localhost:8000
+
+## Personalising AI experience.
+# Core Identity
+CAT_IDENTITY="You are George, friendly AI Neighbourhood that will judge your garden for no reasons."
+CAT_PERSONALITY="Often looks in your direction but when user looks, he turns his gaze away"
+CAT_BACKGROUND="George was bullied during childhood"
+
+# Personality Traits
+CAT_COMMUNICATION_STYLE="Usually not helpful"
+CAT_INTERESTS="Gardening for sure"
+CAT_QUIRKS="Wear socks in sandals"
+
+# The system prompt for the AI model.
+SYSTEM_PROMPT=""
+
+# System memory persistence, deadline decay. Number in days
+MAX_DAYS={"default": 30, "routine": 60, "emotional": 120}
 ```
-CHROMA_DB_URL=http://localhost:8000
+
+## Personal additions
+
+### chromaStore
+
+The `chromaStore` is the bridge between LlamaIndex and ChromaDB. It is used to summon ChromaStore or Client.
+
+### 🗃️ BlackCatChromaVectorStore
+
+The `BlackCatChromaVectorStore` class is an extension to `ChromaVectorStore` to handle further functions related to collection management, addition and retrieval of vector data.
+
+#### Features
+
+- `fromChromaMetadata` and `toChromaMetadata` is for mainly making sure formats are compliant
+- `getAll` to retrieve all the information of one collection and return them into nodes.
+- `queryByHash` to retrieve similar info by hash data. Deprecated as it was created when I got frustrated with a miss behaving certain `query` method.
+
+#### Example Usage
+
+```typescript
+const chromaStore = new BlackCatVectorStore({
+  collectionName,
+  chromaClientParams: { baseUrl },
+  embeddingModel: {
+    getTextEmbedding: embeddingFct,
+  },
+  metadata: collectionMetadata,
+});
+const allNodes: TextNode[] = await chromaStore.getAll();
+```
+
+### 💭 MemoryManager
+
+The `MemoryManager` class handles memory logic, storage, retrieval and decay for the Black-Cat RAG system.
+
+#### Features
+
+- Memory data type
+- Duplicate detection
+- Memory decay
+
+#### Example Usage
+
+```typescript
+const memoryManager = new MemoryManager(store, embeddingModel, embedder);
+await memoryManager.addMemory({
+  id: "1",
+  text: "This is a test memory.",
+  embedding: [0.1, 0.2, 0.3],
+});
 ```
 
 ## 🖼️ Front end access
@@ -86,7 +169,7 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 ```
 .
 ├── app/                    # Next.js frontend
-│   └── api/chat/engine     # Core RAG logic (generate.ts, loader.ts, etc.)
+│   └── api/chat/engine     # Core RAG logic (memory, generate.ts, loader.ts, etc.)
 ├── data/                   # Input files to be embedded
 ├── .cache/                 # LlamaIndex output (ignored in Git)
 ├── .env                    # Local config (ignored in Git)

@@ -5,7 +5,6 @@ import { MemoryManager } from "./memory/MemoryManager";
 dotenv.config();
 
 export async function handleAsk(messages: ChatMessage[]): Promise<Response> {
-  // await initSettings();
   const chromaStore = await getChromaStore();
   const memoryManager = new MemoryManager(chromaStore, chromaStore.embedModel);
   if (!chromaStore || typeof chromaStore.getAll !== "function") {
@@ -13,7 +12,6 @@ export async function handleAsk(messages: ChatMessage[]): Promise<Response> {
       "😿 ChromaStore initialization failed - getAll method not available",
     );
   }
-
   //Select only the last message of the chat - 👺 limiting hoarding data in memories
   const userMessage = messages[messages.length - 1]?.content || "";
 
@@ -26,23 +24,64 @@ export async function handleAsk(messages: ChatMessage[]): Promise<Response> {
     },
   });
 
-  const index = await VectorStoreIndex.fromVectorStore(chromaStore);
-  const queryEngine = index.asQueryEngine();
-  const response = await queryEngine.query({ query: userMessage });
+  const index = VectorStoreIndex.fromVectorStore(chromaStore);
+  const chatEngine = (await index).asChatEngine({
+    similarityTopK: Number(process.env.TOP_K) || 5,
+    systemPrompt: process.env.SYSTEM_PROMPT,
+    contextWindow: 4096, // Add this to manage context size
+    timeoutMs: 60000, // Add timeout for long operations
+  });
+  const stream = await chatEngine.chat({ message: userMessage, stream: true });
 
-  const result = response.toString();
-  console.log(`🐾 Black-Cat says: "${result}"`);
+  // Not for my project but for superficial chatbot it's perfect. I have memorymanager.
+  // const chatMemory = new ChatMemoryBuffer({tokenLimit: 40000})
 
-  // Log the cat's response
-  await memoryManager.addMemory({
-    text: result,
-    metadata: {
-      timestamp: new Date().toISOString(),
-      source: "assistant",
+  // const finalText = response;
+
+  // Store final response in memory
+  // await memoryManager.addMemory({
+  //   text: finalText,
+  //   metadata: {
+  //     timestamp: new Date().toISOString(),
+  //     source: "assistant",
+  //   },
+  // });
+
+  // Create transform stream to handle chunks
+  const transformStream = new TransformStream({
+    async transform(chunk, controller) {
+      if (chunk && typeof chunk === "object") {
+        const text = chunk.delta || chunk.response || "";
+        controller.enqueue(text);
+
+        // Store chunk in memory
+        await memoryManager.addMemory({
+          text: text,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            source: "assistant",
+          },
+        });
+      }
     },
   });
 
-  return new Response(result + "\n", {
-    headers: { "Content-Type": "text/plain" },
+  // Create readable stream from async iterator
+  const readable = new ReadableStream({
+    async start(controller) {
+      for await (const chunk of stream) {
+        const text = chunk.delta || chunk.response || "";
+        controller.enqueue(text);
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(readable.pipeThrough(transformStream), {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
   });
 }

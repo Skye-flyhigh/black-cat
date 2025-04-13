@@ -24,7 +24,7 @@ import {
 } from "../chroma/BlackCatChromaVectorStore";
 dotenv.config();
 
-type MemoryEntry = {
+export type MemoryEntry = {
   id: string;
   text: string;
   metadata?: ChromaMetadata;
@@ -47,20 +47,17 @@ type ChromaInclude = (
 )[];
 export class MemoryManager {
   private store: BlackCatVectorStore;
-  private embeddingModel: BaseEmbedding;
-  private embedder: OllamaEmbeddingFunction;
+  private indexEmbedder: BaseEmbedding;
+  private queryEmbedder: OllamaEmbeddingFunction;
 
   constructor(
     store: BlackCatVectorStore,
-    embeddingModel: BaseEmbedding,
-    embedder: OllamaEmbeddingFunction,
+    indexEmbedder: BaseEmbedding,
+    queryEmbedder: OllamaEmbeddingFunction,
   ) {
     this.store = store;
-    this.embeddingModel = embeddingModel;
-    this.embedder = new OllamaEmbeddingFunction({
-      url: process.env.OLLAMA_URL || "http://localhost:11434",
-      model: process.env.EMBEDDING_MODEL || "mistral",
-    });
+    this.indexEmbedder = indexEmbedder;
+    this.queryEmbedder = queryEmbedder;
   }
   generateHash(text: string): string {
     return createHash("sha256").update(text.toLowerCase()).digest("hex");
@@ -76,7 +73,7 @@ export class MemoryManager {
 
     const lower = text.toLowerCase();
     for (const [cat, keywords] of Object.entries(categories)) {
-      if (keywords.some((k) => lower.includes(k))) return cat; //apparently there is 'eat' in repeat???
+      if (keywords.some((k) => lower.includes(k))) return cat; //apparently there is 'eat' in 'repeat'???
     }
 
     return "misc";
@@ -84,7 +81,7 @@ export class MemoryManager {
   private async generateEmbedding(text: string): Promise<number[]> {
     console.log("🧮 Generating embedding for text:", text);
     try {
-      const embeddings = await this.embedder.generate([text]);
+      const embeddings = await this.queryEmbedder.generate([text]);
       const embedding = embeddings[0]; // Get first result
 
       const expectedDim = parseInt(process.env.EMBEDDING_DIM || "4096");
@@ -159,22 +156,25 @@ export class MemoryManager {
 
   async addMemory(entry: MemoryEntry) {
     console.log("📝 Memory received in the cognitive system...");
-
-    const { id, text, metadata = {}, embedding } = entry;
+    
+    
+    let { id, text, metadata = {}, embedding } = entry;
+    console.log("💾 ", text);
 
     // Validate text content
     if (!text || typeof text !== "string" || !text.trim()) {
       console.warn("🚨 Cannot store empty or invalid text memory.");
       throw new Error("Invalid memory text");
     }
-    const hash = this.generateHash(text);
+    const hash = metadata.hash || this.generateHash(text);
 
-    if (!entry.embedding || entry.embedding.length === 0) {
+    if (!embedding || embedding.length === 0) {
       console.warn("❌ Missing or invalid embedding. Cannot store in Chroma.");
-      entry.embedding = await this.generateEmbedding(text);
+      embedding = await this.generateEmbedding(text);
+      entry.embedding = embedding;
     }
 
-    const isDuplicate = await this.checkDuplicate(text, entry.embedding, hash);
+    const isDuplicate = await this.checkDuplicate(text, embedding, hash);
     if (isDuplicate) {
       console.warn("⚠️ Duplicate memory detected. Skipping insertion.");
       return;
@@ -185,23 +185,24 @@ export class MemoryManager {
     const enrichedMeta: ChromaMetadata = {
       ...metadata,
       hash,
-      timestamp: metadata.timestamp || timestamp,
-      weight: metadata.weight ?? 1,
-      tags: this.formatTags(metadata.tags, text),
-      source: metadata.source || "unknown",
-      category: metadata.category || this.autoCategorize(text),
-      private: metadata.private || false,
+      timestamp: metadata?.timestamp || timestamp,
+      weight: typeof metadata?.weight === "number" ? metadata.weight : 1,
+      tags: metadata?.tags || this.formatTags(metadata.tags, text),
+      source: metadata?.source || "unknown",
+      category: metadata?.category || this.autoCategorize(text),
+      private: metadata?.private || true,
     };
-
+    
     const node: MemoryEntry = new TextNode({
-      id: `memory-${Date.now()}`,
+      id_: `memory-${Date.now()}`,
       text,
       metadata: toChromaMetadata(enrichedMeta),
-      embedding: entry.embedding,
+      embedding: embedding,
     });
     // End of memory generation
     await this.store.add([node]);
     console.log(`✅ Stored memory [${id}] in '${enrichedMeta.category}'`);
+    
   }
 
   async checkDuplicate(
@@ -212,7 +213,7 @@ export class MemoryManager {
     try {
       const vectorQuery: VectorStoreQuery = {
         queryEmbedding: embedding,
-        similarityTopK: 5,
+        similarityTopK: Number(process.env.TOP_K) || 5,
         mode: "default",
         filters: {
           // Use filters to exclude exact matches
@@ -341,27 +342,41 @@ export class MemoryManager {
   async queryMemory(
     queryText: string,
     category?: string,
-    topK: number = 3,
+    topK: number = Number(process.env.TOP_K) || 3,
   ): Promise<TextNode[]> {
-    const embedding = await this.embeddingModel.getTextEmbedding(queryText);
-    const queryParams = {
-      queryEmbeddings: [embedding],
-      similarityTopK: topK,
+    console.log("🗃️ Opening the memory box to remember...");
+    console.log("🤔 ", queryText);
+    
+    const embedding = await this.generateEmbedding(queryText);
+    const vectorQuery: VectorStoreQuery = {
+      queryStr: queryText,
+      queryEmbedding: embedding,
+      topK,
+      mode: "default",
+      mmr_lambda: 0.5, // Mix of similarity and diversity
+      include: ["metadatas", "distances", "documents"],
     };
+try {
+  const results = await this.store.query(vectorQuery);
+  if (!results || results.nodes.length === 0) {console.log("🫥 No memories found...");
+   return []};
+    console.log(`😏 Found ${results.nodes.length} terrible secrets (memories)...`);
 
-    const results = await this.store.query(queryParams);
-    if (!results || results.length === 0) return [];
-
-    return results
-      .filter((node) => {
-        if (!category) return true;
-        return node.metadata?.category === category;
-      })
-      .sort((a, b) => {
-        const wA = a.metadata?.weight ?? 0.5;
-        const wB = b.metadata?.weight ?? 0.5;
-        return wB - wA;
-      });
+      return results.nodes
+        .filter((node) => {
+          if (!category) return true;
+          return node.metadata?.category === category;
+        })
+        .sort((a, b) => {
+          const wA = a.metadata?.weight ?? 0.5;
+          const wB = b.metadata?.weight ?? 0.5;
+          return wB - wA;
+        });
+} catch (error) {
+console.error("⚠️ Memory query failed: ", error)
+}
+      
+      
   }
 
   async deleteMemory(memoryId: string): Promise<void> {
@@ -399,8 +414,8 @@ export class MemoryManager {
     newText: string,
     existingText: string,
   ): Promise<boolean> {
-    const e1 = await this.embeddingModel.getTextEmbedding(newText);
-    const e2 = await this.embeddingModel.getTextEmbedding(existingText);
+    const e1 = await this.indexEmbedder.getTextEmbedding(newText);
+    const e2 = await this.indexEmbedder.getTextEmbedding(existingText);
 
     const dot = e1.reduce((sum, val, i) => sum + val * e2[i], 0);
     const mag1 = Math.sqrt(e1.reduce((sum, val) => sum + val * val, 0));

@@ -55,7 +55,7 @@ export class DuckDuckGoSearchTool implements BaseTool<DuckDuckGoParameter> {
     this.metadata = params.metadata ?? DEFAULT_SEARCH_METADATA;
   }
 
-  async call(input: DuckDuckGoParameter) {
+  async call(input: DuckDuckGoParameter): Promise<DuckDuckGoSearchResult[]> {
     const { query, region, maxResults = 10 } = input;
     const options = region ? { region } : {};
     // Temporarily sleep to reduce overloading the DuckDuckGo
