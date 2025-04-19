@@ -1,28 +1,61 @@
 import * as dotenv from "dotenv";
 import { BaseChatEngine, BaseToolWithCall, LLMAgent } from "llamaindex";
-import fs from "node:fs/promises";
-import path from "node:path";
-import { BlackCatVectorStore } from "./chroma/BlackCatChromaVectorStore";
 import { getDataSource } from "./index";
-import { createTools } from "./tools";
-import { saveMemory } from "./tools/saveMemory";
-import { PersonalityTool } from "./tools/persona";
+import { MemoryManager } from "./memory/MemoryManager";
 import { createQueryEngineTool } from "./tools/query-engine";
-import { MemoryQueryTool } from "./tools/queryMemory";
+import { queryMemory } from "./tools/queryMemory";
+import { saveMemory } from "./tools/saveMemory";
 dotenv.config();
 
-export async function createBlackCatEngine(memoryStore: BlackCatVectorStore) {
+export async function createBlackCatEngine(
+  memoryStore: MemoryManager,
+  queryText: string,
+  selfReflection: string,
+) {
   const tools: BaseToolWithCall[] = [];
 
   // Add built-in tools
-  tools.push(new PersonalityTool());
   tools.push(new saveMemory(memoryStore));
-  tools.push(new MemoryQueryTool(memoryStore))
+  tools.push(new queryMemory(memoryStore));
   // TODO: Add MemoryTool, WorkflowTool, etc here as system grows
 
+  // const configFile = path.join("config", "tools.json");
+  // let toolConfig: any;
+  // try {
+  //   // Add tools from config file if it exists
+  //   toolConfig = JSON.parse(await fs.readFile(configFile, "utf8"));
+  // } catch (e) {
+  //   console.info(`Could not read ${configFile} file. Using no tools.`);
+  // }
+  // if (toolConfig) {
+  //   tools.push(...(await createTools(toolConfig)));
+  // }
+
+  //Recursion starter
+  
+  const memories = await memoryStore.queryMemory(queryText, "core", 5);
+
+  const memorySnippets = memories
+    .map((mem, idx) => `Memory ${idx + 1}: ${mem.text}`)
+    .join("\n");
+    const systemPrompt = `
+    Context from memory:
+  ${memorySnippets}
+
+  Inner monologue:
+  ${selfReflection}
+  Skye's latest query: ${queryText}
+  Answer them:
+  `;
+  const toolsList = [];
+  for (let i = 0; i < tools.length; i++) {
+    toolsList[i] = tools[i]?.constructor?.name || typeof tools[i];
+  }
+  console.log(`🧰 This agent has ${tools.length} tools: `, toolsList);
+
   const agent = new LLMAgent({
-    tools,
-    systemPrompt: process.env.SYSTEM_PROMPT,
+    tools, // One agent can't handle a lot of tool, just 5 or 6 at the time.
+    systemPrompt: systemPrompt, //process.env.SYSTEM_PROMPT,
   });
 
   return agent;
@@ -47,18 +80,6 @@ export async function createChatEngine(documentIds?: string[], params?: any) {
   const index = await getDataSource(params);
   if (index) {
     tools.push(createQueryEngineTool(index, { documentIds }));
-  }
-
-  const configFile = path.join("config", "tools.json");
-  let toolConfig: any;
-  try {
-    // Add tools from config file if it exists
-    toolConfig = JSON.parse(await fs.readFile(configFile, "utf8"));
-  } catch (e) {
-    console.info(`Could not read ${configFile} file. Using no tools.`);
-  }
-  if (toolConfig) {
-    tools.push(...(await createTools(toolConfig)));
   }
 
   const agent = new LLMAgent({

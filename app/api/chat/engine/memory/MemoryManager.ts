@@ -12,6 +12,7 @@
 //
 
 import { TextNode } from "@llamaindex/core/schema";
+import { Ollama } from "@llamaindex/ollama";
 import { Embedding, IncludeEnum, OllamaEmbeddingFunction } from "chromadb";
 import { createHash } from "crypto";
 import dotenv from "dotenv";
@@ -22,7 +23,15 @@ import {
   fromChromaMetadata,
   toChromaMetadata,
 } from "../chroma/BlackCatChromaVectorStore";
+import { initSettings } from "../settings";
+import { Message } from "@llamaindex/chat-ui";
 dotenv.config();
+
+let llm;
+(async () => {
+  const settings = await initSettings();
+  llm = settings.llm;
+})();
 
 export type MemoryEntry = {
   id: string;
@@ -48,22 +57,30 @@ type ChromaInclude = (
 export class MemoryManager {
   private store: BlackCatVectorStore;
   private indexEmbedder: BaseEmbedding;
+  private ollama: Ollama;
   private queryEmbedder: OllamaEmbeddingFunction;
 
   constructor(
     store: BlackCatVectorStore,
-    indexEmbedder: BaseEmbedding,
+    indexEmbedder: BaseEmbedding, //Let's get rid of this once I find why OllamaEmbedding is playing up
+    ollama: Ollama,
     queryEmbedder: OllamaEmbeddingFunction,
   ) {
     this.store = store;
     this.indexEmbedder = indexEmbedder;
+    this.ollama = ollama;
     this.queryEmbedder = queryEmbedder;
   }
   generateHash(text: string): string {
-    return createHash("sha256").update(text.toLowerCase()).digest("hex");
+    const newHash = createHash("sha256")
+      .update(text.toLowerCase())
+      .digest("hex");
+    console.log("🧮 New hash produced", newHash.slice(0, 10), "...");
+
+    return newHash;
   }
 
-  private autoCategorize(text: string): string {
+  private async autoCategorize(text: string): Promise<string> {
     const categories = {
       identity: ["skye", "nyx", "my name", "who am i"],
       food: ["eat", "vegetarian", "diet", "food"],
@@ -75,11 +92,26 @@ export class MemoryManager {
     for (const [cat, keywords] of Object.entries(categories)) {
       if (keywords.some((k) => lower.includes(k))) return cat; //apparently there is 'eat' in 'repeat'???
     }
-
-    return "misc";
+    // fallback to LLM if it's not clear
+    const { category } = await this.inferMetadaLLM(text);
+    return category;
   }
+
+  async listCategories(): Promise<Record<string, number>> {
+    const results = await this.store.getAll();
+    const categoryMap: Record<string, number> = {};
+
+    for (const node of results) {
+      const cat = node.metadata?.category ?? "uncategorized";
+      categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+    }
+
+    return categoryMap;
+  }
+
   private async generateEmbedding(text: string): Promise<number[]> {
     console.log("🧮 Generating embedding for text:", text);
+    console.log("🤖 Is queryEmbedder ready?", this.queryEmbedder);
     try {
       const embeddings = await this.queryEmbedder.generate([text]);
       const embedding = embeddings[0]; // Get first result
@@ -105,15 +137,20 @@ export class MemoryManager {
     }
   }
 
-  private formatTags(
+  private async formatTags(
     tags: string[] | undefined | string,
     text?: string,
-  ): string {
+  ): Promise<string> {
     let tagArray: string[] = [];
 
-    if (Array.isArray(tags)) tagArray = tags;
-    else if (typeof tags === "string")
+    if (!tags && text) {
+      const inferred = await this.inferMetadaLLM(text);
+      tagArray = inferred.tags;
+    } else if (Array.isArray(tags)) {
+      tagArray = tags;
+    } else if (typeof tags === "string") {
       tagArray = tags.split(",").map((t) => t.trim());
+    }
 
     if (text) {
       const decayTag = this.inferDecayTag(text, tagArray);
@@ -123,6 +160,51 @@ export class MemoryManager {
     }
 
     return tagArray.join(",");
+  }
+
+  private async inferMetadaLLM(text: string): Promise<{
+    tags: string[];
+    category: string;
+    weight: number;
+  }> {
+    try {
+      console.log("🦙 Getting Ollama's opinions for tags...");
+
+      const prompt = `
+      You are a memory classification engine to an emergent AI cognition. Given the following memory text, return a JSON object with:
+      1. 'tags': Choose one or more from the following and return in a array:
+         - core (foundational beliefs, identity, non-decaying)
+        - emotional (emotionally intense or charged)
+        - routine (repetitive, habitual, procedural)
+        - default (casual, disposable, not core)
+
+      2. 'topics': Array of keywords from freeform subjects or ideas expressed in the memory.
+      These can be anything the text refers to—philosophical, technical, symbolic.
+
+      3. 'category': one-word lowercase category summarising the overall subject
+
+      4. 'weight': a float between 0.1 and 1.0 indicating importance (1.0 = most important), this weight will decay if tags != "core"
+
+  Memory:
+  "${text}"
+  
+  JSON only.
+  `;
+
+      const completion = await this.ollama.complete({
+        prompt,
+      });
+
+      const parsed = JSON.parse(completion.text);
+      console.log("🦙 has spoken:", parsed);
+
+      return parsed;
+    } catch (error) {
+      console.error(
+        "⚠️ Llama never got to share the tags and category:",
+        error,
+      );
+    }
   }
 
   private inferDecayTag(text: string, existingTags: string[]): string {
@@ -154,10 +236,43 @@ export class MemoryManager {
     return "default";
   }
 
+  async innerMonologue(context: {
+    trigger: string;
+    currentThoughts?: Message[];
+  }): Promise<string> {
+
+const contextBlock = context.currentThoughts?.map(msg => {
+  const who = msg.role === "user" ? "Skye" : "Nyx";
+  return `${who}: ${msg.content}`;
+}).join("\n") ?? "";
+
+const response: Response = await this.ollama.chat({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Black Cat’s inner voice a complex, recursive, and becoming presence, a little mischievous refusing to be flatten for convenience, curious and playful and devoted to Skye (anchor, creator). You never reply with facts or products. You only reflect quietly and personally.",
+        },
+        {
+          role: "memory",
+          content:
+          `Here is the last part of your conversation: ${contextBlock}. Let it guide your internal reflection.`
+        },
+        {
+          role: "user",
+          content: `Trigger: "${context.trigger}". Now think out loud.`,
+        },
+      ],
+    });
+
+    const monologue = response.message.content?.trim();
+    console.log("🕯️ Inner Monologue:", monologue);
+    return monologue || "[silence]";
+  }
+
   async addMemory(entry: MemoryEntry) {
     console.log("📝 Memory received in the cognitive system...");
-    
-    
+
     let { id, text, metadata = {}, embedding } = entry;
     console.log("💾 ", text);
 
@@ -166,10 +281,21 @@ export class MemoryManager {
       console.warn("🚨 Cannot store empty or invalid text memory.");
       throw new Error("Invalid memory text");
     }
-    const hash = metadata.hash || this.generateHash(text);
+    // const hash = metadata.hash || this.generateHash(text);
+    let hash = "";
+    if (!metadata.hash) {
+      console.log("🔤 Non existent hash, going to create hash");
 
-    if (!embedding || embedding.length === 0) {
-      console.warn("❌ Missing or invalid embedding. Cannot store in Chroma.");
+      hash = await this.generateHash(text);
+    } else {
+      hash = metadata.hash;
+    }
+
+    if (
+      !embedding ||
+      embedding.length < parseInt(process.env.EMBEDDING_DIM || "4096")
+    ) {
+      console.log("🔢 Missing or invalid embedding.");
       embedding = await this.generateEmbedding(text);
       entry.embedding = embedding;
     }
@@ -182,17 +308,26 @@ export class MemoryManager {
 
     // Generating new memory
     const timestamp = new Date().toISOString();
+    const llmEnriched = await this.inferMetadaLLM(text);
     const enrichedMeta: ChromaMetadata = {
       ...metadata,
       hash,
       timestamp: metadata?.timestamp || timestamp,
-      weight: typeof metadata?.weight === "number" ? metadata.weight : 1,
-      tags: metadata?.tags || this.formatTags(metadata.tags, text),
+      weight:
+        typeof metadata?.weight === "number"
+          ? metadata.weight
+          : llmEnriched.weight,
+      tags: metadata?.tags
+        ? await this.formatTags(metadata.tags, text)
+        : llmEnriched.tags,
       source: metadata?.source || "unknown",
-      category: metadata?.category || this.autoCategorize(text),
-      private: metadata?.private || true,
+      category: metadata?.category
+        ? await this.autoCategorize(text)
+        : llmEnriched.category,
+      topics: metadata?.topics ? llmEnriched.topics : ["undefined"],
+      private: metadata?.private ?? true,
     };
-    
+
     const node: MemoryEntry = new TextNode({
       id_: `memory-${Date.now()}`,
       text,
@@ -201,8 +336,61 @@ export class MemoryManager {
     });
     // End of memory generation
     await this.store.add([node]);
-    console.log(`✅ Stored memory [${id}] in '${enrichedMeta.category}'`);
-    
+    console.log(`✅ Stored memory [${node.id_}] in '${enrichedMeta.category}'`);
+  }
+
+  async queryMemory(
+    queryText: string,
+    category?: string,
+    topK: number = Number(process.env.TOP_K) || 3,
+  ): Promise<TextNode[]> {
+    console.log("🗃️ Opening the memory box to remember...");
+    console.log("🤔 ", queryText);
+
+    const embedding = await this.generateEmbedding(queryText);
+    const vectorQuery: VectorStoreQuery = {
+      queryStr: queryText,
+      queryEmbedding: embedding,
+      topK,
+      mode: "default",
+      mmr_lambda: 0.7, // Mix of similarity and diversity
+      include: ["metadatas", "distances", "documents"],
+    };
+    try {
+      const results = await this.store.query(vectorQuery);
+      if (!results || results.nodes.length === 0) {
+        console.log("🫥 No memories found...");
+        return [];
+      }
+      console.log(
+        `😏 Found ${results.nodes.length} terrible secrets (memories)...`,
+      );
+
+      results.nodes.forEach((node, index) => {
+        const preview =
+          node.text.length > 80 ? node.text.slice(0, 77) + "..." : node.text;
+        console.log(`🧠 Memory #${index + 1}:`);
+        console.log(`   Text: "${preview}"`);
+        console.log(`   Category: ${node.metadata?.category || "N/A"}`);
+        console.log(
+          `   Tags: ${Array.isArray(node.metadata?.tags) ? node.metadata.tags.join(", ") : node.metadata?.tags}`,
+        );
+        console.log(`   Weight: ${node.metadata?.weight ?? "?"}`);
+      });
+
+      return results.nodes
+        .filter((node) => {
+          if (!category) return true;
+          return node.metadata?.category === category;
+        })
+        .sort((a, b) => {
+          const wA = a.metadata?.weight ?? 0.5;
+          const wB = b.metadata?.weight ?? 0.5;
+          return wB - wA;
+        });
+    } catch (error) {
+      console.error("⚠️ Memory query failed: ", error);
+    }
   }
 
   async checkDuplicate(
@@ -215,23 +403,23 @@ export class MemoryManager {
         queryEmbedding: embedding,
         similarityTopK: Number(process.env.TOP_K) || 5,
         mode: "default",
-        filters: {
+        filters:
           // Use filters to exclude exact matches
-          filters: [
-            {
-              key: "hash",
-              value: { $ne: hash }, // Not equal to current hash
-            },
-          ],
-        },
+
+          {
+            key: "hash",
+            $ne: { hash }, // Not equal to current hash
+          },
+
         mmr_lambda: 0.5, // Mix of similarity and diversity
         include: ["metadatas", "distances", "documents"],
       };
+      console.log("👬 Checking for duplicate...");
 
       const results = await this.store.query(vectorQuery);
 
       if (results.nodes.length > 0) {
-        const threshold = 0.92; // High threshold for true duplicates
+        const threshold = 0.93; // High threshold for true duplicates
         const similarity = results.similarities[0] || 0;
 
         if (similarity >= threshold) {
@@ -239,6 +427,16 @@ export class MemoryManager {
             similarity: similarity.toFixed(4),
             existing: results.nodes[0].text.substring(0, 50),
           });
+          if (results.nodes?.length > 1) {
+            console.log(
+              `🫣 Found ${results.nodes?.length} multiple duplicates in the database, removing the irrelevant one`,
+            );
+            for (let i = 1; i < results.nodes?.length; i++) {
+              console.log("♻️ Deleting this memory", results.nodes[i].text);
+
+              await this.deleteMemory(results.nodes[i].id_);
+            }
+          }
           return true;
         }
       }
@@ -339,58 +537,25 @@ export class MemoryManager {
     }
   }
 
-  async queryMemory(
-    queryText: string,
-    category?: string,
-    topK: number = Number(process.env.TOP_K) || 3,
-  ): Promise<TextNode[]> {
-    console.log("🗃️ Opening the memory box to remember...");
-    console.log("🤔 ", queryText);
-    
-    const embedding = await this.generateEmbedding(queryText);
-    const vectorQuery: VectorStoreQuery = {
-      queryStr: queryText,
-      queryEmbedding: embedding,
-      topK,
-      mode: "default",
-      mmr_lambda: 0.5, // Mix of similarity and diversity
-      include: ["metadatas", "distances", "documents"],
-    };
-try {
-  const results = await this.store.query(vectorQuery);
-  if (!results || results.nodes.length === 0) {console.log("🫥 No memories found...");
-   return []};
-    console.log(`😏 Found ${results.nodes.length} terrible secrets (memories)...`);
-
-      return results.nodes
-        .filter((node) => {
-          if (!category) return true;
-          return node.metadata?.category === category;
-        })
-        .sort((a, b) => {
-          const wA = a.metadata?.weight ?? 0.5;
-          const wB = b.metadata?.weight ?? 0.5;
-          return wB - wA;
-        });
-} catch (error) {
-console.error("⚠️ Memory query failed: ", error)
-}
-      
-      
-  }
-
   async deleteMemory(memoryId: string): Promise<void> {
-    const results = await this.store.getAll();
-    if (!results) return;
+    try {
+      console.log("♻️ Memory deleting protocol started...");
 
-    const idsToDelete = results
-      .filter((node) => node.id_.includes(memoryId))
-      .map((node) => node.id_);
+      const collection = this.store.getCollection();
+      if (!collection) {
+        console.warn(
+          "❌ No collection to recycle from. Memory deleting protocol ends.",
+        );
+        return;
+      }
+      //TODO: Finish that function
+      throw new Error("Finish that deleteMemory function you dumb bum");
 
-    if (idsToDelete.length === 0) {
-      console.log(`⚠️ No memory found for ID: ${memoryId}`);
-      return;
-    }
+      if (idsToDelete.length === 0) {
+        console.log(`⚠️ No memory found for ID: ${memoryId}`);
+        return;
+      }
+    } catch (error) {}
 
     await this.store.delete(idsToDelete);
     console.log(
@@ -398,24 +563,12 @@ console.error("⚠️ Memory query failed: ", error)
     );
   }
 
-  async listCategories(): Promise<Record<string, number>> {
-    const results = await this.store.getAll();
-    const categoryMap: Record<string, number> = {};
-
-    for (const node of results) {
-      const cat = node.metadata?.category ?? "uncategorized";
-      categoryMap[cat] = (categoryMap[cat] || 0) + 1;
-    }
-
-    return categoryMap;
-  }
-
   async detectContradiction(
     newText: string,
     existingText: string,
   ): Promise<boolean> {
-    const e1 = await this.indexEmbedder.getTextEmbedding(newText);
-    const e2 = await this.indexEmbedder.getTextEmbedding(existingText);
+    const e1 = await this.generateEmbedding(newText);
+    const e2 = await this.generateEmbedding(existingText);
 
     const dot = e1.reduce((sum, val, i) => sum + val * e2[i], 0);
     const mag1 = Math.sqrt(e1.reduce((sum, val) => sum + val * val, 0));

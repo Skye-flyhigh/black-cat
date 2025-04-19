@@ -11,7 +11,7 @@ type PersonalityToolParams = {
 
 const DEFAULT_META_DATA: ToolMetadata<JSONSchemaType<PersonalityParameter>> = {
   name: "personality_tool",
-  description: "Preferred personality type of the Assistant",
+  description: "Use this tool for identity core, essence and core values.",
   parameters: {
     type: "object",
     properties: {
@@ -57,7 +57,8 @@ export class PersonalityTool implements BaseTool<PersonalityParameter> {
     if (lowerAspect.includes("all") || lowerAspect.includes("profile")) {
       return JSON.stringify(this.traits, null, 2);
     }
-
+    console.log("✨ Persona on ✨");
+    
     return "Unknown personality aspect requested";
   }
 }

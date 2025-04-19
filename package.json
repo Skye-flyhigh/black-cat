@@ -1,6 +1,6 @@
 {
   "name": "black-cat",
-  "version": "0.1.0",
+  "version": "0.4.9",
   "scripts": {
     "format": "prettier --ignore-unknown --cache --check .",
     "format:write": "prettier --ignore-unknown --write .",

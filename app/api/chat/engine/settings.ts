@@ -14,7 +14,7 @@ export const initSettings = async () => {
     throw new Error("'MODEL' and 'EMBEDDING_MODEL' env variables must be set.");
   }
 
-  const baseUrl = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
+  const baseUrl = process.env.BASE_URL || "http://127.0.0.1:11434";
 
   const llm = setupProvider();
   const ollamaEmbedding = new OllamaEmbeddingFunction({
@@ -23,9 +23,9 @@ export const initSettings = async () => {
   });
 
   Settings.llm = llm;
-  Settings.embedModel = ollamaEmbedding;
+  Settings.embedModel = ollamaEmbedding; //Chroma based embedding doesn't exist so it will return to undefined
   Settings.chunkSize = CHUNK_SIZE;
   Settings.chunkOverlap = CHUNK_OVERLAP;
 
-  return { llm, embedModel: ollamaEmbedding };
+  return { llm, embedder: ollamaEmbedding }; //skipped global setting for embedder for now
 };

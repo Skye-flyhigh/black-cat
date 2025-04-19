@@ -8,8 +8,9 @@ export type ChromaMetadata = {
   timestamp: string;
   weight: number;
   tags: string[];
-  source?: string;
   category?: string;
+  topics?: string[];
+  source?: string;
   private: boolean;
 };
 export type ChromaDBMetadata = Record<string, string>;
@@ -63,7 +64,7 @@ export class BlackCatVectorStore extends ChromaVectorStore {
           new TextNode({
             id: response.ids[0][i],
             text: response.documents[0][i],
-            metadatas: fromChromaMetadata(response.metadatas[0][i]),
+            metadatas: response.metadatas[0][i],
             embedding: response.embeddings?.[0]?.[i],
           }),
         );

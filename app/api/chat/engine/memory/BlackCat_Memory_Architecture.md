@@ -123,42 +123,48 @@ Only interacts with ChromaDB — no logic beyond query/store/update.
 
 ### Memory Entry Metadata
 
-  ``` ts
-  metadata = {
-    tags: string[],              // e.g., ["core", "identity"]
-    weight: number,              // 0.0–1.0, controls decay
-    timestamp: string,           // ISO timestamp
-    source: "user" | "assistant",
-    category: string,            // e.g., "identity", "mission"
-    hash: string,                // Deduplication fingerprint
-    private?: boolean            // Optional flag for privacy
-  }
-  ```
+```ts
+metadata = {
+  tags: string[],              // e.g., ["core", "identity"]
+  weight: number,              // 0.0–1.0, controls decay
+  timestamp: string,           // ISO timestamp
+  source: "user" | "assistant",
+  category: string,            // e.g., "identity", "mission"
+  hash: string,                // Deduplication fingerprint
+  private?: boolean            // Optional flag for privacy
+}
+```
 
 - Every update should leave an audit trace (for future evolution/debugging)
 
 ### 📚 Memory Entry Glossary
 
 - **tags**: Descriptive labels that guide decay behavior and search filters.
+
   - `core`: Permanent, foundational memories.
   - `routine`: Regularly used info that might decay if unused.
   - `emotional`: Emotionally charged memories, slower decay.
   - `default`: Unclassified or system-generated content.
 
 - **weight**: A float between 0.0–1.0 indicating importance and decay resistance.
+
   - Starts at 1.0 and decays gradually.
   - Memories with `core` tag are exempt from decay.
 
 - **timestamp**: ISO 8601 string for memory creation or last access.
+
   - Used to assess aging and relevance.
 
 - **source**: Denotes who generated the memory.
+
   - `"user"` or `"assistant"`.
 
 - **category**: Logical grouping like `identity`, `mission`, `memory`, `misc`.
+
   - Used to scope searches and refine relevance.
 
 - **hash**: Semantic fingerprint for deduplication.
+
   - Prevents re-storing similar or identical entries.
 
 - **private**: Boolean flag for internal memories.
@@ -177,11 +183,13 @@ Only interacts with ChromaDB — no logic beyond query/store/update.
 ## 🗺️ How this fits the bigger picture
 
 🧰 Tool Logic (e.g., MemoryTool)
+
 - Wraps MemoryManager actions for LLM access
 - Uses strict JSON schema for safe structured prompting
 - Enforces controlled memory writes (vs. hallucinated memories)
 
 🧠 Agent Role (e.g., LLMAgent)
+
 - Coordinates tools
 - Uses prompt to determine when to use a tool vs answer directly
 

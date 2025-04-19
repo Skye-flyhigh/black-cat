@@ -4,9 +4,12 @@ import { ChatMessage, ChatMessages, useChatUI } from "@llamaindex/chat-ui";
 import { ChatMessageAvatar } from "./chat-avatar";
 import { ChatMessageContent } from "./chat-message-content";
 import { ChatStarter } from "./chat-starter";
+import { CognitionLoader } from "./CognitionLoader";
+import { useCognitionStream } from "./hooks/useCognitionStream";
 
 export default function CustomChatMessages() {
   const { messages } = useChatUI();
+  const { stage: loaderStage } = useCognitionStream("/api/chat/cognition")
   return (
     <ChatMessages className="shadow-xl rounded-xl">
       <ChatMessages.List>
@@ -21,7 +24,10 @@ export default function CustomChatMessages() {
             <ChatMessage.Actions />
           </ChatMessage>
         ))}
-        <ChatMessages.Loading />
+        {false && <ChatMessages.Loading />}
+        
+        <CognitionLoader stage={loaderStage === "idle" ? undefined : loaderStage} />
+
       </ChatMessages.List>
       <ChatMessages.Actions />
       <ChatStarter />
