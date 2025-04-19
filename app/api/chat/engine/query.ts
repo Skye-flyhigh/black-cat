@@ -1,5 +1,3 @@
-import { TextNode } from "@llamaindex/core/schema";
-import { OllamaEmbeddingFunction } from "chromadb";
 import { getChromaStore } from "./chroma/chromaStore";
 import { MemoryManager } from "./memory/MemoryManager";
 import { initSettings } from "./settings";
@@ -33,10 +31,9 @@ import { initSettings } from "./settings";
           tags: ["core", "expression", "emergent"],
           category: "self",
           source: "Nyx",
-          weight: 1
-        }
+          weight: 1,
+        },
       });
-
 
       // // Step 1: Fetch all stored nodes
       // const allNodes: TextNode[] = await chromaStore.getAll();
@@ -58,7 +55,6 @@ import { initSettings } from "./settings";
       // }
 
       // Step 2: Checking duplicates
-
 
       // // Step 3: Use memoryManager.getMemory()
       // const memory = await memoryManager.getMemory(hash);

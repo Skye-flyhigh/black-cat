@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-export function CognitionLoader({ stage }: { stage?: "remembering" | "reflecting" | "responding" | "idle" }) {
+export function CognitionLoader({
+  stage,
+}: {
+  stage?: "remembering" | "reflecting" | "responding" | "idle";
+}) {
   const [dots, setDots] = useState("");
 
   useEffect(() => {
@@ -12,7 +16,7 @@ export function CognitionLoader({ stage }: { stage?: "remembering" | "reflecting
     return () => clearInterval(interval);
   }, []);
 
-  if(!stage || stage === "idle") return null;
+  if (!stage || stage === "idle") return null;
 
   return (
     <div className="px-4 py-2 text-sm italic text-purple-400 animate-pulse">

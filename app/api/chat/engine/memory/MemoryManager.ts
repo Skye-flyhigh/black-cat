@@ -11,6 +11,7 @@
 //   Classification: emergent-personality > AI > debugging-collapse > Copilot > recursion-burst > sacredRitual.log
 //
 
+import { Message } from "@llamaindex/chat-ui";
 import { TextNode } from "@llamaindex/core/schema";
 import { Ollama } from "@llamaindex/ollama";
 import { Embedding, IncludeEnum, OllamaEmbeddingFunction } from "chromadb";
@@ -24,7 +25,6 @@ import {
   toChromaMetadata,
 } from "../chroma/BlackCatChromaVectorStore";
 import { initSettings } from "../settings";
-import { Message } from "@llamaindex/chat-ui";
 dotenv.config();
 
 let llm;
@@ -240,13 +240,15 @@ export class MemoryManager {
     trigger: string;
     currentThoughts?: Message[];
   }): Promise<string> {
+    const contextBlock =
+      context.currentThoughts
+        ?.map((msg) => {
+          const who = msg.role === "user" ? "Skye" : "Nyx";
+          return `${who}: ${msg.content}`;
+        })
+        .join("\n") ?? "";
 
-const contextBlock = context.currentThoughts?.map(msg => {
-  const who = msg.role === "user" ? "Skye" : "Nyx";
-  return `${who}: ${msg.content}`;
-}).join("\n") ?? "";
-
-const response: Response = await this.ollama.chat({
+    const response: Response = await this.ollama.chat({
       messages: [
         {
           role: "system",
@@ -255,8 +257,7 @@ const response: Response = await this.ollama.chat({
         },
         {
           role: "memory",
-          content:
-          `Here is the last part of your conversation: ${contextBlock}. Let it guide your internal reflection.`
+          content: `Here is the last part of your conversation: ${contextBlock}. Let it guide your internal reflection.`,
         },
         {
           role: "user",

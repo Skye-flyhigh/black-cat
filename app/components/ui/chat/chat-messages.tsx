@@ -9,7 +9,7 @@ import { useCognitionStream } from "./hooks/useCognitionStream";
 
 export default function CustomChatMessages() {
   const { messages } = useChatUI();
-  const { stage: loaderStage } = useCognitionStream("/api/chat/cognition")
+  const { stage: loaderStage } = useCognitionStream("/api/chat/cognition");
   return (
     <ChatMessages className="shadow-xl rounded-xl">
       <ChatMessages.List>
@@ -25,9 +25,10 @@ export default function CustomChatMessages() {
           </ChatMessage>
         ))}
         {false && <ChatMessages.Loading />}
-        
-        <CognitionLoader stage={loaderStage === "idle" ? undefined : loaderStage} />
 
+        <CognitionLoader
+          stage={loaderStage === "idle" ? undefined : loaderStage}
+        />
       </ChatMessages.List>
       <ChatMessages.Actions />
       <ChatStarter />

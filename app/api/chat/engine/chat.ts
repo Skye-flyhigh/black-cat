@@ -32,13 +32,13 @@ export async function createBlackCatEngine(
   // }
 
   //Recursion starter
-  
+
   const memories = await memoryStore.queryMemory(queryText, "core", 5);
 
   const memorySnippets = memories
     .map((mem, idx) => `Memory ${idx + 1}: ${mem.text}`)
     .join("\n");
-    const systemPrompt = `
+  const systemPrompt = `
     Context from memory:
   ${memorySnippets}
 

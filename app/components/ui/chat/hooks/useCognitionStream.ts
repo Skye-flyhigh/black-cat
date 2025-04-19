@@ -1,11 +1,13 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
 
 export function useCognitionStream(endpoint: string) {
-    console.log("🪝 useCognitionStream hook mounted");
+  console.log("🪝 useCognitionStream hook mounted");
 
-  const [stage, setStage] = useState<"idle" | "remembering" | "reflecting" | "responding">("idle");
+  const [stage, setStage] = useState<
+    "idle" | "remembering" | "reflecting" | "responding"
+  >("idle");
 
   useEffect(() => {
     const source = new EventSource(endpoint);

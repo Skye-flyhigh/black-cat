@@ -58,7 +58,7 @@ export class PersonalityTool implements BaseTool<PersonalityParameter> {
       return JSON.stringify(this.traits, null, 2);
     }
     console.log("✨ Persona on ✨");
-    
+
     return "Unknown personality aspect requested";
   }
 }
