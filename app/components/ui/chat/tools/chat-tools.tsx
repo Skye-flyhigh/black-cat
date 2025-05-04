@@ -8,11 +8,12 @@ import { JSONValue } from "ai";
 import { useMemo } from "react";
 import { Artifact, CodeArtifact } from "./artifact";
 import { WeatherCard, WeatherData } from "./weather-card";
+import { useChatContext } from "@/app/components/ChatProvider";
 
 export function ToolAnnotations({ message }: { message: Message }) {
   // TODO: This is a bit of a hack to get the artifact version. better to generate the version in the tool call and
   // store it in CodeArtifact
-  const { messages } = useChatUI();
+  const { messages } = useChatContext();
   const artifactVersion = useMemo(
     () => getArtifactVersion(messages, message),
     [messages, message],

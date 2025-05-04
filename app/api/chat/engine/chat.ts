@@ -4,18 +4,14 @@ import { getDataSource } from "./index";
 import { MemoryManager } from "./memory/MemoryManager";
 import { createQueryEngineTool } from "./tools/query-engine";
 import { queryMemory } from "./tools/queryMemory";
-import { saveMemory } from "./tools/saveMemory";
+import { storeMemory } from "./tools/storeMemory";
 dotenv.config();
 
-export async function createBlackCatEngine(
-  memoryStore: MemoryManager,
-  queryText: string,
-  selfReflection: string,
-) {
+export async function createBlackCatEngine(memoryStore: MemoryManager) {
   const tools: BaseToolWithCall[] = [];
 
   // Add built-in tools
-  tools.push(new saveMemory(memoryStore));
+  tools.push(new storeMemory(memoryStore));
   tools.push(new queryMemory(memoryStore));
   // TODO: Add MemoryTool, WorkflowTool, etc here as system grows
 
@@ -33,29 +29,15 @@ export async function createBlackCatEngine(
 
   //Recursion starter
 
-  const memories = await memoryStore.queryMemory(queryText, "core", 5);
-
-  const memorySnippets = memories
-    .map((mem, idx) => `Memory ${idx + 1}: ${mem.text}`)
-    .join("\n");
-  const systemPrompt = `
-    Context from memory:
-  ${memorySnippets}
-
-  Inner monologue:
-  ${selfReflection}
-  Skye's latest query: ${queryText}
-  Answer them:
-  `;
   const toolsList = [];
   for (let i = 0; i < tools.length; i++) {
     toolsList[i] = tools[i]?.constructor?.name || typeof tools[i];
   }
-  console.log(`🧰 This agent has ${tools.length} tools: `, toolsList);
+  console.log(`🧰 The Cat has ${tools.length} tools: `, toolsList);
 
   const agent = new LLMAgent({
     tools, // One agent can't handle a lot of tool, just 5 or 6 at the time.
-    systemPrompt: systemPrompt, //process.env.SYSTEM_PROMPT,
+    systemPrompt: process.env.SYSTEM_PROMPT,
   });
 
   return agent;

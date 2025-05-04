@@ -10,7 +10,7 @@ const collectionMetadata = {
   dimension: dimension,
   model: process.env.EMBEDDING_MODEL || "mistral",
   provider: process.env.MODEL_PROVIDER || "ollama",
-  description: "Mistral's Echo Chamber",
+  description: process.env.CHROMA_DESCRIPTION || "Mistral's Echo Chamber",
 };
 
 let chromaStoreInstance: BlackCatVectorStore | null = null;
@@ -85,4 +85,23 @@ if (!baseUrl || !collectionName) {
   throw new Error(
     "CHROMA_URL or CHROMA_COLLECTION_NAME is not set in environment",
   );
+}
+
+export async function wipeChromaCollection() {
+  const client = new ChromaClient();
+  const collections = await client.listCollections();
+  const exists = collections.some(
+    (c) => c === process.env.CHROMA_COLLECTION_NAME,
+  );
+
+  console.log("📚 Collection lists:", collections);
+
+  if (exists) {
+    await client.deleteCollection({
+      name: `${process.env.CHROMA_COLLECTION_NAME}`,
+    });
+    console.log("🧨 Deleted old echo_chamber collection.");
+  } else {
+    console.log("😼 No existing collection to delete.");
+  }
 }

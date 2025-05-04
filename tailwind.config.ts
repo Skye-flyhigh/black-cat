@@ -18,38 +18,38 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: "hsl(248, 12%, 25%)", // Desaturated navy border
+        input: "hsl(248, 15%, 18%)", // Slightly brighter field
+        ring: "hsl(270, 100%, 70%)", // Glitch ring color
+        background: "hsl(248, 15%, 7%)", // Deep midnight blue
+        foreground: "hsl(258, 20%, 90%)", // Soft lavender white
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "hsl(270, 70%, 60%)", // Glitch violet
+          foreground: "hsl(0, 0%, 100%)", // White on primary
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "hsl(248, 12%, 20%)", // Subtle blue/grey secondary
+          foreground: "hsl(258, 20%, 85%)", // Lavender secondary text
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
-          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
+          DEFAULT: "hsl(0, 85%, 50%)", // High alert red
+          foreground: "hsl(0, 0%, 100%)", // White text on danger
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "hsl(248, 10%, 14%)", // Subtle navy-muted tone
+          foreground: "hsl(258, 15%, 65%)", // Dimmed lilac text
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "hsl(270, 70%, 50%)", // Electric violet
+          foreground: "hsl(0, 0%, 100%)", // Pure white
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "hsl(248, 15%, 10%)", // Shadowy violet
+          foreground: "hsl(258, 20%, 88%)", // Gentle pale lilac
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "hsl(248, 15%, 8%)", // Card base (deep midnight blue)
+          foreground: "hsl(258, 20%, 88%)", // Same as general foreground
         },
       },
       borderRadius: {

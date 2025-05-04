@@ -49,6 +49,6 @@ import { initSettings } from "./settings";
 
   (async () => {
     await generateDatasource();
-    console.log("✅ Echo chamber up and ready.");
+    console.log(`✅ Echo chamber up and ready.`);
   })();
 })();

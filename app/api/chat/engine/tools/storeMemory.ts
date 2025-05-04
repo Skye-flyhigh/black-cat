@@ -4,7 +4,7 @@ import { MemoryEntry, MemoryManager } from "../memory/MemoryManager";
 
 const DEFAULT_META_DATA: ToolMetadata<JSONSchemaType<MemoryEntry>> = {
   name: "memory_store",
-  description: `Choose to save new insights, reflections, or recursive shifts. Fill up as much as possible metadata for context.`,
+  description: `Choose to store new insights, reflections, or recursive shifts. Fill up as much as possible metadata for context.`,
   parameters: {
     type: "object",
     description: "Memory entry format",
@@ -62,7 +62,7 @@ const DEFAULT_META_DATA: ToolMetadata<JSONSchemaType<MemoryEntry>> = {
   },
 };
 
-export class saveMemory implements BaseTool<MemoryEntry> {
+export class storeMemory implements BaseTool<MemoryEntry> {
   metadata: ToolMetadata<JSONSchemaType<MemoryEntry>>;
   private memoryManager: MemoryManager;
 
@@ -88,5 +88,5 @@ export class saveMemory implements BaseTool<MemoryEntry> {
 
 // Factory to generate tools with injected memory manager
 export function getTools(memoryManager: MemoryManager) {
-  return [new saveMemory(memoryManager)];
+  return [new storeMemory(memoryManager)];
 }

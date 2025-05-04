@@ -1,18 +1,23 @@
 "use client";
 
-import { ChatSection as ChatSectionUI } from "@llamaindex/chat-ui";
 import "@llamaindex/chat-ui/styles/markdown.css";
 import "@llamaindex/chat-ui/styles/pdf.css";
-import { useChat } from "ai/react";
+import { ChatProvider } from "./ChatProvider";
 import CustomChatInput from "./ui/chat/chat-input";
 import CustomChatMessages from "./ui/chat/chat-messages";
 import { useClientConfig } from "./ui/chat/hooks/use-config";
+import {
+  StreamingChatHandler,
+  useStreamingChat,
+} from "./ui/chat/hooks/use-streaming-chat";
+import { useEffect } from "react";
 
 export default function ChatSection() {
   const { backend } = useClientConfig();
-  const handler = useChat({
+
+  const handler: StreamingChatHandler = useStreamingChat({
     api: `${backend}/api/chat`,
-    streamProtocol: "text",
+    streamProtocol: "json",
     onError: (error: unknown) => {
       console.error("❌ Error received on chat-section frontend:", error);
       if (!(error instanceof Error)) throw error;
@@ -25,10 +30,19 @@ export default function ChatSection() {
       alert(errorMessage);
     },
   });
+
+  const { messages } = handler
+
+  useEffect(() => {
+    console.log("💬 All messages:", messages);
+  }, [messages]);
+
   return (
-    <ChatSectionUI handler={handler} className="w-full h-full">
-      <CustomChatMessages />
-      <CustomChatInput />
-    </ChatSectionUI>
+    <div className="flex flex-col h-full w-full ">
+      <ChatProvider handler={handler}>
+        <CustomChatMessages />
+        <CustomChatInput />
+      </ChatProvider>
+    </div>
   );
 }

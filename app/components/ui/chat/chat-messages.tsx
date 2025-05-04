@@ -1,37 +1,45 @@
 "use client";
 
-import { ChatMessage, ChatMessages, useChatUI } from "@llamaindex/chat-ui";
+import { Message } from "@llamaindex/chat-ui";
+import { useChatContext } from "../../ChatProvider";
 import { ChatMessageAvatar } from "./chat-avatar";
 import { ChatMessageContent } from "./chat-message-content";
-import { ChatStarter } from "./chat-starter";
-import { CognitionLoader } from "./CognitionLoader";
-import { useCognitionStream } from "./hooks/useCognitionStream";
+import { StreamingChatHandler, useStreamingStore } from "./hooks/use-streaming-chat";
 
 export default function CustomChatMessages() {
-  const { messages } = useChatUI();
-  const { stage: loaderStage } = useCognitionStream("/api/chat/cognition");
-  return (
-    <ChatMessages className="shadow-xl rounded-xl">
-      <ChatMessages.List>
-        {messages.map((message, index) => (
-          <ChatMessage
-            key={index}
-            message={message}
-            isLast={index === messages.length - 1}
-          >
-            <ChatMessageAvatar />
-            <ChatMessageContent />
-            <ChatMessage.Actions />
-          </ChatMessage>
-        ))}
-        {false && <ChatMessages.Loading />}
+  const { handler }: { handler: StreamingChatHandler } = useChatContext();
+  const messages = useStreamingStore((state) => state.messages);
+  const { streamingMessage, isStreaming } = handler;
 
-        <CognitionLoader
-          stage={loaderStage === "idle" ? undefined : loaderStage}
-        />
-      </ChatMessages.List>
-      <ChatMessages.Actions />
-      <ChatStarter />
-    </ChatMessages>
+  console.log("Rendering messages", messages);
+
+  return (
+    <div className="flex-1 overflow-y-auto space-y-4 p-4">
+      {messages.map((message, index) => (
+        <div key={index} className="flex items-start gap-4">
+          <ChatMessageAvatar message={message} />
+          <ChatMessageContent message={message} />
+        </div>
+      ))}
+
+      {isStreaming && (
+        <div className="flex items-start gap-4">
+          <ChatMessageAvatar
+            message={{
+              role: "assistant",
+              content: streamingMessage || "Thinking...",
+            }}
+          />
+          <div className="animate-pulse">
+            <ChatMessageContent
+              message={{
+                role: "assistant",
+                content: streamingMessage || "Thinking...",
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
