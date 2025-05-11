@@ -2,19 +2,17 @@
 
 import { Message } from "@llamaindex/chat-ui";
 import { useChatContext } from "../../ChatProvider";
-import { useStreamingStore } from "./hooks/use-streaming-chat";
+import { useMessageStore } from "./hooks/use-streaming-chat";
+import { shallow } from "zustand/shallow";
 
 export default function CustomChatInput() {
   const { handler } = useChatContext();
-  const { input, setInput, isLoading, fetchModelResponse } = handler
-    const messages = useStreamingStore((state) => state.messages);
-  
-
+  const { input, setInput, isLoading, messages, fetchModelResponse } = handler;
+  // const messages = useMessageStore((state) => state.messages, shallow)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    
     try {
       if(!isLoading && input ){ 
         const userMsg: Message = {
@@ -22,15 +20,13 @@ export default function CustomChatInput() {
           content: input.trim(),
         };
         
+        setInput(""); // Clear input after sending
       await handler.append(userMsg);
-      setInput(""); // Clear input after sending
 
-      // Immediately form the new message history
-  const currentMessages = useStreamingStore.getState().messages;
-  const responseMessage = await fetchModelResponse([...currentMessages]);
+      const newMessages = [...messages, userMsg];
+      const response = await fetchModelResponse([...newMessages, userMsg])
+      await handler.append(response)
 
-  // Then append the assistant's response
-  await handler.append(responseMessage);
     }} catch (error) {
       console.error("Failed to send message:", error);
   };
@@ -76,8 +72,7 @@ export default function CustomChatInput() {
       className="p-4 border-t border-gray-200 dark:border-gray-800 w-full"
     >
       <div className="flex gap-2">
-        <input
-          type="text"
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Come chat with me..."

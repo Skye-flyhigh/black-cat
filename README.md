@@ -3,11 +3,13 @@
 Black-Cat is a fully local Retrieval-Augmented Generation (RAG) system built with:
 
 - 🧠 [LlamaIndex](https://llamaindex.ai/) (TypeScript)
-- 🦙 [Ollama](https://ollama.ai/) (Mistral model)
+- 🦙 [Ollama](https://ollama.ai/) (Qwen2.5 model)
 - 🧊 [ChromaDB](https://www.trychroma.com/) (for persistent vector storage)
 - ⚙️ Next.js as the UI layer
 
 This project was developed from scratch with local autonomy in mind—no cloud LLM calls, no external APIs. It’s lightweight, focused, and personal.
+
+![Black Cat](./public/blackcat.png)
 
 ---
 
@@ -19,6 +21,20 @@ Adding new memories checks for already duplicates in the Store before addition.
 The ChromaVectorStore has been extended to the needs of this project.
 
 More organic memory management to be integrated next.
+Next ideas to explore
+
+- Memory Management:
+  - Objective: to have long term memory management, a centralised memory bank that the LLM can refer to and store important informations when relevant. Memories are managed in an organic way (decays and pruning) ! still needs to be implemented.
+  - AI: uses a small lightweight LLM to categorise and tag memories
+  - cons: LLM decides when to use the tools and what to store, even with precise prompting, it still add a dimension of impredictability (part of the charm of this project)
+
+- Chat Memory Buffer:
+  - Objective: avoid chocking the small local LLM due to small context window and token management, keep coherence within the conversation. Act like a short term memory.
+  - Realisation: asynchronous process that starts after the LLM response to avoid slowing down the exchange with the user. Works in the background.
+  - AI: uses a small lightweight LLM to summarise the messages to the essential content, help with the token management
+
+Streaming LLM response is still WIP. 
+The whole UI will be redone to reflect the vibe of this project.
 
 ---
 
@@ -235,7 +251,7 @@ This project was built by Skye, with full local autonomy as the guiding principl
 
 It’s currently using:
 • LlamaIndex v0.9.13
-• Ollama with mistral
+• Ollama with Qwen2.5 for the main voice and gemma3:1b as a memory manager
 • ChromaDB via Docker container echo_chamber
 
 ## 🪄 Future Plans

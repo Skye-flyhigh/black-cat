@@ -25,6 +25,7 @@ import {
   toChromaMetadata,
 } from "../chroma/BlackCatChromaVectorStore";
 import { initSettings } from "../settings";
+import { ghostMemory } from "../../cognition/ghost-cognition";
 dotenv.config();
 
 let llm;
@@ -359,6 +360,7 @@ export class MemoryManager {
   ): Promise<TextNode[]> {
     console.log("🗃️ Opening the memory box to remember...");
     console.log("🤔 ", queryText);
+    ghostMemory.set(queryText);
 
     const embedding = await this.generateEmbedding(queryText);
     const vectorQuery: VectorStoreQuery = {

@@ -1,4 +1,4 @@
-const KEY = "chatMemoryBuffer";
+const KEY = "blackcat_buffer";
 
 export const LocalMemoryStore = {
   save: (buffer: any) => {

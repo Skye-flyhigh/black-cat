@@ -1,11 +1,13 @@
 import { ChatHandler, Message } from "@llamaindex/chat-ui";
 import { useCallback, useState } from "react";
 import { create } from "zustand";
+import { shallow } from "zustand/shallow";
+import { createWithEqualityFn } from 'zustand/traditional';
 
 export interface StreamingChatHandler extends ChatHandler {
   streamingMessage: string;
   isStreaming: boolean;
-  fetchModelResponse: any;
+  fetchModelResponse: (messages: Message[]) => Promise<Message>;
 }
 export type StreamProtocol = "text" | "json" | "sse";
 
@@ -16,25 +18,28 @@ interface StreamingChatOptions {
 }
 
 interface StreamingState {
-  messages: Message[];
   streamingMessage: string;
   isStreaming: boolean;
-  setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setStreamingMessage: (message: string) => void;
   setIsStreaming: (isStreaming: boolean) => void;
-  reset: () => void;
 }
 
 export const useStreamingStore = create<StreamingState>((set) => ({
-  messages: [], // Add messages to store
   streamingMessage: "",
   isStreaming: false,
-  setMessages: (messages) => set((state) => ({
-    messages: typeof messages === 'function' ? messages(state.messages) : messages
-  })),
   setStreamingMessage: (message) => set({ streamingMessage: message }),
   setIsStreaming: (isStreaming) => set({ isStreaming }),
-  reset: () => set({ streamingMessage: "", isStreaming: false }), // Don't reset messages on reset
+}));
+
+interface MessageState {
+  messages: Message[];
+  append: (msg: Message) => void;
+  setMessages: (msgs: Message[]) => void;
+}
+export const useMessageStore = createWithEqualityFn<MessageState>((set) => ({
+  messages: [],
+  append: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
+  setMessages: (msgs) => set({ messages: msgs }),
 }));
 
 export const useStreamingMessage = () => {
@@ -53,10 +58,8 @@ export function useStreamingChat({
   const { 
     setStreamingMessage, 
     setIsStreaming, 
-    setMessages, // Get setMessages from store
-    messages, // Get messages from store
-    reset 
   } = useStreamingStore();
+  const messages = useMessageStore((state) => state.messages, shallow);
   const normalizedProtocol = (streamProtocol || "text").toLowerCase() as StreamProtocol;
 
   const handleStreamChunk = useCallback((chunk: string, decoder: TextDecoder) => {
@@ -104,7 +107,10 @@ export function useStreamingChat({
 
           const response = await fetch(api, {
             method: "POST",
-            headers: { "Content-Type": "application/json",
+            headers: { 
+              "Content-Type": "text/event-stream",
+              "Cache-Control": "no-cache",
+              "Connection": "keep-alive",
               "Accept": normalizedProtocol === "sse" ? "text/event-stream" : "application/json"
              },
             body: JSON.stringify({
@@ -166,13 +172,10 @@ export function useStreamingChat({
         return finalAssistantMessage;
       }
 
-  const append = async (
-      message: Message,
-      chatRequestOptions?: { data?: any },
-    ): Promise<string | null | undefined> => {
-      setMessages(prev => [...prev, message]); 
-      return message.content
-    };
+      const append = async (message: Message): Promise<string | null | undefined> => {
+        useMessageStore.getState().append(message);
+        return message.content;
+      };
 
   return {
     input,

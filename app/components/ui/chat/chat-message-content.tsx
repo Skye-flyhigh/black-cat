@@ -19,7 +19,8 @@ export function ChatMessageContent({ message }: { message: Message }) {
   });
 
   // Use streaming message if available, otherwise use regular message content
-  const content = isStreaming ? streamingMessage : message.content;
+  // const content = isStreaming ? streamingMessage : message.content;
+  const content = message.content
 
   const customContent = [
     {

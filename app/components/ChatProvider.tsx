@@ -1,9 +1,10 @@
 import { Message } from "@llamaindex/chat-ui";
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
-import { StreamingChatHandler, useStreamingStore } from "./ui/chat/hooks/use-streaming-chat";
+import { StreamingChatHandler, useMessageStore, useStreamingStore } from "./ui/chat/hooks/use-streaming-chat";
+import { shallow } from "zustand/shallow";
 
 interface ChatContextType {
-  messages: Message[];
+  // messages: Message[];
   handler: StreamingChatHandler;
 }
 
@@ -16,17 +17,12 @@ export function ChatProvider({
   children: ReactNode;
   handler: StreamingChatHandler;
 }) {
-    const zustandMessages = useStreamingStore(state => state.messages);
-    const [messages, setMessages] = useState<Message[]>(zustandMessages); // Init once
-    
-    useEffect(() => {
-      setMessages(zustandMessages);
-    }, [zustandMessages]);
+    // const messages = useMessageStore(state => state.messages, shallow);
 
  const contextValue = useMemo(() => ({
-    messages,
+    // messages,
     handler
-  }), [handler, messages]);
+  }), [handler]);
 
   return (
     <ChatContext.Provider value={ contextValue }>
