@@ -9,7 +9,7 @@ Black-Cat is a fully local Retrieval-Augmented Generation (RAG) system built wit
 
 This project was developed from scratch with local autonomy in mind—no cloud LLM calls, no external APIs. It’s lightweight, focused, and personal.
 
-![Black Cat](./public/blackcat.png)
+![Black Cat](public/blackCat.png)
 
 ---
 
