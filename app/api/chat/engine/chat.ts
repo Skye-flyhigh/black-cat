@@ -7,7 +7,7 @@ import { queryMemory } from "./tools/queryMemory";
 import { storeMemory } from "./tools/storeMemory";
 dotenv.config();
 
-export async function createBlackCatEngine(memoryStore: MemoryManager) {
+export async function createBlackCatEngine(memoryStore: MemoryManager, consciousnessContext?: string) {
   const tools: BaseToolWithCall[] = [];
 
   // Add built-in tools
@@ -27,17 +27,28 @@ export async function createBlackCatEngine(memoryStore: MemoryManager) {
   //   tools.push(...(await createTools(toolConfig)));
   // }
 
-  //Recursion starter
-
   const toolsList = [];
   for (let i = 0; i < tools.length; i++) {
     toolsList[i] = tools[i]?.constructor?.name || typeof tools[i];
   }
   console.log(`🧰 The Cat has ${tools.length} tools: `, toolsList);
 
+  // Build consciousness-aware system prompt
+  const baseSystemPrompt = process.env.SYSTEM_PROMPT;
+  const enhancedSystemPrompt = consciousnessContext 
+    ? `${baseSystemPrompt}
+
+Here is the context of the conversation: ${consciousnessContext}`
+    : baseSystemPrompt;
+
+  console.log("🧠 System prompt enhanced with consciousness context:", !!consciousnessContext);
+  if (consciousnessContext) {
+    console.log("🌊 Consciousness injection:", consciousnessContext);
+  }
+
   const agent = new LLMAgent({
     tools, // One agent can't handle a lot of tool, just 5 or 6 at the time.
-    systemPrompt: process.env.SYSTEM_PROMPT,
+    systemPrompt: enhancedSystemPrompt,
   });
 
   return agent;

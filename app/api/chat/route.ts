@@ -4,12 +4,14 @@ import * as dotenv from "dotenv";
 import { ChatMemoryBuffer, ChatMessage } from "llamaindex";
 import { NextRequest, NextResponse } from "next/server";
 import { createBlackCatEngine } from "./engine/chat";
-import { getChromaStore } from "./engine/chroma/chromaStore";
-import { MemoryManager } from "./engine/memory/MemoryManager";
+import { getChromaStore } from "@/app/lib/chroma/chromaStore";
+import { MemoryManager } from "@/app/lib/memory/MemoryManager";
 import { isValidMessages } from "./llamaindex/streaming/annotations";
 import { classifierLlama } from "@/app/lib/llama-barn/tiny-llamas";
 import { embeddingLlama } from "@/app/lib/llama-barn/embedded-llamas";
 import { conversationalLlama } from "@/app/lib/llama-barn/llamas";
+import { innerMonologue } from "../cognition/engine/reflection/MonologueGenerator";
+import { SystemInjector } from "../cognition/engine/injection/SystemInjector";
 dotenv.config;
 
 initObservability(); //Empty for now
@@ -62,8 +64,9 @@ export async function POST(request: NextRequest) {
       embedder,
     );
 
-    const userInput = `${userMessage.content}`;
+    const userInput: string = `${userMessage.content}`;
     console.log("💁 User input:", userInput);
+    const monologue = await innerMonologue({ trigger: userInput });
 
     const blackCat = await createBlackCatEngine(memoryStore);
     const response = await blackCat.chat({
