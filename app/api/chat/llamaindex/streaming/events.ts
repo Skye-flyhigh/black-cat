@@ -9,7 +9,7 @@ import {
   ToolOutput,
 } from "llamaindex";
 import path from "node:path";
-import { DATA_DIR } from "../../engine/loader";
+import { DATA_DIR } from "../../../cognition/engine/daemon/ChatAPI-legacy/loader";
 import { downloadFile } from "./file";
 
 const LLAMA_CLOUD_DOWNLOAD_FOLDER = "output/llamacloud";

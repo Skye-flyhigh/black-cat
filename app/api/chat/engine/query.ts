@@ -1,6 +1,6 @@
 import { getChromaStore } from "./chroma/chromaStore";
 import { MemoryManager } from "./memory/MemoryManager";
-import { initSettings } from "./settings";
+import { initSettings } from "../../cognition/engine/daemon/ChatAPI-legacy/settings";
 
 (async () => {
   const { llm, embedder } = await initSettings();

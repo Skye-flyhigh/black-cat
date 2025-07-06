@@ -1,12 +1,14 @@
+// Previously was in the chat API but kept for legacy and future ref
+
 import * as dotenv from "dotenv";
 import { VectorStoreIndex } from "llamaindex";
 import { storageContextFromDefaults } from "llamaindex/storage/StorageContext";
 // Load environment variables from local .env file
 dotenv.config();
 
-import { createChromaStore } from "./chroma/chromaStore";
+import { createChromaStore } from "../../../chat/engine/chroma/chromaStore";
 import { getDocuments } from "./loader";
-import { initSettings } from "./settings";
+import { initSettings } from "../../chat/engine/settings";
 
 (async () => {
   await initSettings();

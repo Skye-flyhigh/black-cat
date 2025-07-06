@@ -1,4 +1,4 @@
-import { ChromaClient } from "chromadb";
+import { ChromaClient, IEmbeddingFunction } from "chromadb";
 import * as dotenv from "dotenv";
 import { BlackCatVectorStore } from "./BlackCatChromaVectorStore";
 dotenv.config();
@@ -16,10 +16,16 @@ const collectionMetadata = {
 let chromaStoreInstance: BlackCatVectorStore | null = null;
 let chromaClient: ChromaClient | null = null;
 
-const embeddingFct = async (text: string) => {
-  return Array(process.env.EMBEDDING_DIM || 4096)
+const simpleEmbeddingFn = async (text: string): Promise<number[]> => {
+  return Array(parseInt(process.env.EMBEDDING_DIM || "4096"))
     .fill(0)
     .map(() => Math.random() - 0.5);
+};
+
+const bloodyChromaBasedAnnoyingEmbeddingFn : IEmbeddingFunction = {
+  generate: async (texts: string[]) => {
+    return texts.map(text => simpleEmbeddingFn(text))
+  }
 };
 
 export async function getChromaStore(): Promise<BlackCatVectorStore> {
@@ -36,7 +42,7 @@ export async function getChromaStore(): Promise<BlackCatVectorStore> {
     await chromaClient.createCollection({
       name: collectionName,
       metadata: collectionMetadata,
-      embeddingFunction: embeddingFct,
+      embeddingFunction: bloodyChromaBasedAnnoyingEmbeddingFn,
     });
   } else {
     console.log("📚 Collection found. Proceeding...");
@@ -45,7 +51,7 @@ export async function getChromaStore(): Promise<BlackCatVectorStore> {
   // Ensure the collection exists and pre-load it to trigger connection setup
   await chromaClient.getOrCreateCollection({
     name: collectionName,
-    embeddingFunction: embeddingFct,
+    embeddingFunction: bloodyChromaBasedAnnoyingEmbeddingFn,
     metadata: collectionMetadata,
   });
 
@@ -54,7 +60,7 @@ export async function getChromaStore(): Promise<BlackCatVectorStore> {
       collectionName,
       chromaClient,
       embeddingModel: {
-        getTextEmbedding: embeddingFct,
+        getTextEmbedding: simpleEmbeddingFn,
       },
       metadata: collectionMetadata,
     });
@@ -75,7 +81,7 @@ export function createChromaStore() {
     collectionName,
     chromaClientParams: { baseUrl },
     embeddingModel: {
-      getTextEmbedding: embeddingFct,
+      getTextEmbeddings: simpleEmbeddingFn,
     },
     metadata: collectionMetadata,
   });

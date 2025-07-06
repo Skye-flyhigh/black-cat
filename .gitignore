@@ -35,3 +35,6 @@ next-env.d.ts
 
 # 👉 Raw Data Files (ignored by default)
 /data/*
+
+/echo-lab/
+*-CLAUDE.md
