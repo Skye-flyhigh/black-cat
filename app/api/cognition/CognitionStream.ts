@@ -1,9 +1,9 @@
 import { Message } from "@llamaindex/chat-ui";
 import { BaseEmbedding, ChatMessage, LLM } from "llamaindex";
 import { emitPhase } from "../emitPhase";
-import { createVaultArchivist } from "../engine/chat";
-import { getChromaStore } from "../engine/chroma/chromaStore";
-import { MemoryManager } from "../engine/memory/MemoryManager";
+import { createVaultArchivist } from "../chat/engine/chat";
+import { getChromaStore } from "../chat/engine/chroma/chromaStore";
+import { MemoryManager } from "../chat/engine/memory/MemoryManager";
 
 export async function CognitionStream({
   llm,

@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
-import { DATA_DIR } from "../../chat/engine/loader";
+import { DATA_DIR } from "../../cognition/engine/daemon/ChatAPI-legacy/loader";
 
 /**
  * This API is to get file data from allowed folders

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "../engine";
-import { initSettings } from "../engine/settings";
+import { initSettings } from "../../cognition/engine/daemon/ChatAPI-legacy/settings";
 import { uploadDocument } from "../llamaindex/documents/upload";
 
 initSettings();

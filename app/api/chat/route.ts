@@ -1,5 +1,4 @@
 import { initObservability } from "@/app/observability";
-import { Ollama } from "@llamaindex/ollama";
 import { Message } from "ai";
 import * as dotenv from "dotenv";
 import { ChatMemoryBuffer, ChatMessage } from "llamaindex";
@@ -7,12 +6,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createBlackCatEngine } from "./engine/chat";
 import { getChromaStore } from "./engine/chroma/chromaStore";
 import { MemoryManager } from "./engine/memory/MemoryManager";
-import { initSettings } from "./engine/settings";
 import { isValidMessages } from "./llamaindex/streaming/annotations";
+import { classifierLlama } from "@/app/lib/llama-barn/tiny-llamas";
+import { embeddingLlama } from "@/app/lib/llama-barn/embedded-llamas";
+import { conversationalLlama } from "@/app/lib/llama-barn/llamas";
 dotenv.config;
 
 initObservability(); //Empty for now
-const { llm, embedder } = await initSettings();
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,18 +50,9 @@ export async function POST(request: NextRequest) {
     // Get recent context
     const recentMessages = await chatMemory.getMessages();
 
-    // Phase 1: Remembering
-    const tinyOllama = new Ollama({
-      model: "gemma3:1b",
-      config: {
-        baseUrl: process.env.BASE_URL || "http://127.0.0.1:11434",
-      },
-      options: {
-        temperature: Number(process.env.LLM_TEMPERATURE) || 0.7,
-        num_ctx: Number(process.env.LLM_MAX_TOKEN) || 4096,
-        top_p: Number(process.env.TOP_P) || 0.9,
-      },
-    });
+    const tinyOllama = classifierLlama;
+    const embedder = embeddingLlama;
+    const voice = conversationalLlama;
 
     const chromaStore = await getChromaStore();
     const memoryStore = new MemoryManager(
@@ -112,7 +103,7 @@ export async function POST(request: NextRequest) {
         controller.close();
       },
     });
-    console.log(`🗣️ ${llm.model} said:`, response);
+    console.log(`🗣️ ${voice.model} said:`, response);
 
     return new NextResponse(readable, {
       headers: {

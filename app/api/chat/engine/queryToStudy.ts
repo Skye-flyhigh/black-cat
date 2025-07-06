@@ -2,7 +2,7 @@
 import * as dotenv from "dotenv";
 import { BlackCatVectorStore } from "./chroma/BlackCatChromaVectorStore";
 import { getChromaStore } from "./chroma/chromaStore";
-import { initSettings } from "./settings";
+import { initSettings } from "../../cognition/engine/daemon/ChatAPI-legacy/settings";
 dotenv.config();
 
 (async () => {

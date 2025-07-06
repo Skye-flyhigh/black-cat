@@ -2,7 +2,7 @@ import { Document } from "llamaindex";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { getExtractors } from "../../engine/loader";
+import { getExtractors } from "../../../cognition/engine/daemon/ChatAPI-legacy/loader";
 import { DocumentFile } from "../streaming/annotations";
 
 const MIME_TYPE_TO_EXT: Record<string, string> = {

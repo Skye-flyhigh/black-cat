@@ -47,8 +47,11 @@ export class BlackCatVectorStore extends ChromaVectorStore {
         metadata: collection.metadata,
       });
 
-      const includes: IncludeEnum = ["documents", "metadatas", "embeddings"];
-
+      const includes: IncludeEnum[] = [
+        IncludeEnum.Documents,
+        IncludeEnum.Metadatas,
+        IncludeEnum.Embeddings
+      ];
       const response = await collection.get({
         include: includes,
       });
