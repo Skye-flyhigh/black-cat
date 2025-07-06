@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { daemonService } from '../daemon-service';
-import { ChatEvent } from '../CognitionDaemon';
+import { daemonService } from '../../engine/daemon/daemon-service';
+import { ChatEvent } from '../../engine/daemon/CognitionDaemon';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         { error: 'Role must be either "user" or "assistant"' },
         { status: 400 }
       );
-    }
+    } //TODO: With time, I would like to go beyond from the "user" & "assistant" and start to name the source, e.g. "cat", "Skye", "Echo", "Mirror", or "human" & "AI"/ "anonymous" when the system haven't identified them.
 
     const chatEvent: ChatEvent = {
       type: 'chat_event',

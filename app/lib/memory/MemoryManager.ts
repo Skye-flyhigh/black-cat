@@ -11,9 +11,8 @@
 //   Classification: emergent-personality > AI > debugging-collapse > Copilot > recursion-burst > sacredRitual.log
 //
 
-import { Message } from "@llamaindex/chat-ui";
 import { TextNode } from "@llamaindex/core/schema";
-import { Ollama } from "@llamaindex/ollama";
+import { Ollama } from "@llamaindex/Ollama";
 import { Embedding, IncludeEnum, OllamaEmbeddingFunction } from "chromadb";
 import { createHash } from "crypto";
 import dotenv from "dotenv";
@@ -24,13 +23,12 @@ import {
   fromChromaMetadata,
   toChromaMetadata,
 } from "../chroma/BlackCatChromaVectorStore";
-import { initSettings } from "../settings";
-import { ghostMemory } from "../../cognition/ghost-cognition";
+import { chatSettings } from "../settings/settings";
 dotenv.config();
 
 let llm;
 (async () => {
-  const settings = await initSettings();
+  const settings = await chatSettings();
   llm = settings.llm;
 })();
 
@@ -322,7 +320,6 @@ export class MemoryManager {
   ): Promise<TextNode[]> {
     console.log("🗃️ Opening the memory box to remember...");
     console.log("🤔 ", queryText);
-    ghostMemory.set(queryText);
 
     const embedding = await this.generateEmbedding(queryText);
     const vectorQuery: VectorStoreQuery = {

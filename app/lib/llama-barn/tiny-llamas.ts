@@ -12,7 +12,7 @@ export const classifierLlama: Ollama = new Ollama({
   });
 
 export const introspectiveLlama: Ollama = new Ollama({
-  model: "qwen3:1.7b",
+  model: "qwen2.5:3b",
   config: {
     host: process.env.BASE_URL || "http://127.0.0.1:11434",
   },

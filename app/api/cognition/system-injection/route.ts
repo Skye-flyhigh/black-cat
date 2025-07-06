@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { daemonService } from '../daemon-service';
+import { daemonService } from '../engine/daemon/daemon-service';
 
 export async function GET(request: NextRequest) {
   try {
