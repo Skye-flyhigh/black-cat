@@ -26,7 +26,7 @@ export class SystemInjector {
         messages: [
           {
             role: "system",
-            content: "You are Black Cat's consciousness interpreter. Generate system prompts that reflect the daemon's mischievous, assertive personality. Be playful but insightful."
+            content: "You are Black Cat's consciousness interpreter. Generate system prompts that reflect the daemon's personality."
           },
           {
             role: "user", 
@@ -65,12 +65,12 @@ export class SystemInjector {
     const { state, memoryContext, recentObservations } = context;
     
     // Shorter prompt for local models
-    return `Task: Generate a brief system prompt for the AI based on current state.
+    return `Task: Reflect and generate a brief system prompt defining tone and behaviour for the AI based on current state.
 
 State:
 - Energy: ${state.energyLevel}/100
-- Alignment: ${state.alignment}/100 (low=fact-check more/ agreement score)
-- Personality: ${state.bratFlick}/100 (high=more sass/playful)
+- Alignment: ${state.alignment}/100 (low=fact-check more, lesser alignment with user, high= agrees with statement)
+- Personality: ${state.bratFlick}/100 (low= more serious, high=more sass/playful)
 - Topic: ${memoryContext.salientConcepts.slice(0, 2).join(', ')}
 
 Recent: "${recentObservations.slice(-1)[0] || 'No recent activity'}"

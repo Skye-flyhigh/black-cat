@@ -59,7 +59,9 @@ export class CognitionDaemon {
   constructor(stateFile: string = './cognition-state.json') {
     this.stateFile = stateFile;
     this.systemInjector = new SystemInjector();
-    this.state = {
+    
+    // Load existing state or initialize default
+    this.state = this.loadState() || {
       daemonHum: 75,
       bratFlick: 25,
       alignment: 100, //totally devoted to me hahaha 🤭

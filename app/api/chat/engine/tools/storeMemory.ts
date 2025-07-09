@@ -1,10 +1,10 @@
 import { JSONSchemaType } from "ajv";
 import { BaseTool, ToolMetadata } from "llamaindex";
-import { MemoryEntry, MemoryManager } from "../memory/MemoryManager";
+import { MemoryEntry, MemoryManager } from "@/app/lib/memory/MemoryManager";
 
 const DEFAULT_META_DATA: ToolMetadata<JSONSchemaType<MemoryEntry>> = {
   name: "memory_store",
-  description: `Choose to store new insights, reflections, or recursive shifts. Fill up as much as possible metadata for context.`,
+  description: `Store new information, insights, reflections, or recursive shifts. Fill up as much as possible metadata for context.`,
   parameters: {
     type: "object",
     description: "Memory entry format",
@@ -48,6 +48,16 @@ const DEFAULT_META_DATA: ToolMetadata<JSONSchemaType<MemoryEntry>> = {
           type: "boolean",
           description:
             "Set to true if the memory should not be shared externally.",
+        },
+        hash: {
+          type: "string",
+          description: "Hashed representation of the memory entry",
+          nullable: true
+        },
+        topic: {
+          type: "array",
+          items: { type: "string" },
+          description: "Topics related to the memory entry",
         },
         nullable: true,
       },
