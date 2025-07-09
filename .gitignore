@@ -36,7 +36,19 @@ next-env.d.ts
 # 👉 Raw Data Files (ignored by default)
 /data/*
 
+# VSCode
+.vscode/
+
+# Echo and Claude information
 /echo-lab/
 *-CLAUDE.md
+.claude/
 
+# Any testing files
 *test*
+
+# Temporary files
+*.tmp
+
+# Dev container
+.devcontainer/

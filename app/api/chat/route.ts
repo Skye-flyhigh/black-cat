@@ -10,8 +10,8 @@ import { isValidMessages } from "./llamaindex/streaming/annotations";
 import { classifierLlama } from "@/app/lib/llama-barn/tiny-llamas";
 import { embeddingLlama } from "@/app/lib/llama-barn/embedded-llamas";
 import { conversationalLlama } from "@/app/lib/llama-barn/llamas";
-import { innerMonologue } from "../cognition/engine/reflection/MonologueGenerator";
-import { SystemInjector } from "../cognition/engine/injection/SystemInjector";
+import { ContextualStateAdjuster } from "../cognition/engine/state/ContextualStateAdjuster";
+import * as fs from "fs";
 dotenv.config;
 
 initObservability(); //Empty for now
@@ -66,9 +66,19 @@ export async function POST(request: NextRequest) {
 
     const userInput: string = `${userMessage.content}`;
     console.log("💁 User input:", userInput);
-    const monologue = await innerMonologue({ trigger: userInput });
 
-    const blackCat = await createBlackCatEngine(memoryStore);
+    // Generate dynamic consciousness state based on context
+    console.log("🧠 Generating dynamic consciousness state...");
+    const stateAdjuster = new ContextualStateAdjuster();
+    const dynamicDaemonState = await stateAdjuster.adjustStateFromContext(
+      userInput,
+      recentMessages,
+      // TODO: Pass previous injection for contradiction detection
+    );
+
+    const consciousnessInjection = JSON.parse(fs.readFileSync(`./app/api/cognition/config/system-prompt.json`, 'utf-8'));
+
+    const blackCat = await createBlackCatEngine(memoryStore, consciousnessInjection?.promptDelta);
     const response = await blackCat.chat({
       message: userInput,
       chatHistory: recentMessages as ChatMessage[],

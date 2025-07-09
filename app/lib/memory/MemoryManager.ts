@@ -13,10 +13,10 @@
 
 import { TextNode } from "@llamaindex/core/schema";
 import { Ollama } from "@llamaindex/Ollama";
+import { BaseEmbedding, VectorStoreQuery } from "llamaindex";
 import { Embedding, IncludeEnum, OllamaEmbeddingFunction } from "chromadb";
 import { createHash } from "crypto";
 import dotenv from "dotenv";
-import { BaseEmbedding, VectorStoreQuery } from "llamaindex";
 import {
   BlackCatVectorStore,
   ChromaMetadata,

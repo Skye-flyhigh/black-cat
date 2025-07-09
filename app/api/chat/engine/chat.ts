@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import { BaseChatEngine, BaseToolWithCall, LLMAgent } from "llamaindex";
 import { getDataSource } from "./index";
-import { MemoryManager } from "./memory/MemoryManager";
+import { MemoryManager } from "@/app/lib/memory/MemoryManager";
 import { createQueryEngineTool } from "./tools/query-engine";
 import { queryMemory } from "./tools/queryMemory";
 import { storeMemory } from "./tools/storeMemory";
